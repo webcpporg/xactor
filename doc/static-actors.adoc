@@ -1,0 +1,139 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-static-actors]
+== Static actors
+
+A static actor is an actor whose behaviour is a state machine compiled into
+the program: its states, its events and its transitions are {cpp} types and
+expressions, checked by the compiler and fixed when the program is built. It
+suits behaviour known when the program is written. The compiler checks its
+table, and nothing is read or interpreted at run time; in exchange, a change
+to the machine is a change to the program, and the machine cannot come from a
+file or a request.
+
+xactor holds no adapter for a state machine library, and needs none. An actor
+logic is any class with a `handle`, so a logic holds a machine as a member and
+hands each message to it, and the machine's actions reach the system through
+the turn. The program joins them with an event type that carries the turn and
+a `handle` of a few lines, and nothing else. Nothing in xactor knows
+the library, and the library does not know xactor, so any library whose
+machines take typed events joins the same way. This section writes one
+machine with Boost.MSM, one of Boost's libraries.
+
+The machine does not receive the message alone. It receives an `on<Event>`,
+which holds the message and the turn it arrived in, both by reference:
+
+[source]
+----
+include::{examples}/xactor_msm.cpp[tag=event,indent=0]
+----
+
+An action takes the turn from its event, so it can reply, send, finish or arm
+a timer as any logic does, paid from the right execution. The `on<Event>` is
+built inside `handle` and lives for one call of the machine, so its
+references never outlive the turn.
+
+The machine is a turnstile, the first machine of many state machine
+tutorials. It starts locked. A coin unlocks it, and a push goes through and
+locks it again. A push while it is locked sounds an alarm, and a coin while it
+is unlocked is refunded: the turnstile replies `alarm` or `refund` to the
+actor that pushed or paid. A visitor puts a coin in, pushes twice and puts two
+coins in, all in one turn, and prints what comes back:
+
+[source]
+----
+include::{examples}/xactor_msm.cpp[tag=visitor,indent=0]
+----
+
+The host creates the turnstile and a visitor, and delivers the visitor the
+address of the turnstile to visit:
+
+[source]
+----
+include::{examples}/xactor_msm.cpp[tag=run,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_msm.expected[]
+----
+
+The turnstile prints `locked` as soon as `create_actor` constructs it, since
+its machine enters its initial state then. The first coin, the first push and
+the second coin take it to `unlocked`, back to `locked` and to `unlocked`
+again. The second push and the last coin change no state, and enter none:
+they are answered with `alarm` and `refund`. The visitor hears the alarm after
+the turnstile's last `unlocked`, because the alarm joined the queue behind the
+turnstile, which still had messages waiting, and the scheduler serves the
+actors with messages in turn (<<xactor-scheduler>>).
+
+[#xactor-msm]
+=== The machine, with Boost.MSM
+
+The program uses MSM's classic back-end, `msm::back::state_machine`, and its
+functor front-end, whose rows are types in a Boost.MPL `vector`:
+
+[source]
+----
+include::{examples}/xactor_msm.cpp[tag=includes,indent=0]
+----
+
+MSM writes a machine as a front-end, a struct derived from
+`msm::front::state_machine_def` of itself, which holds the states, the table
+and the machine's data:
+
+[source]
+----
+include::{examples}/xactor_msm.cpp[tag=chart,indent=0]
+----
+
+Each state is a struct derived from `msm::front::state<>`, here with an
+`on_entry`, and `initial_state` names the first. Each row of
+`transition_table` is a `Row<Source, Event, Target, Action, Guard>`. `none`
+as its target makes an internal transition, which runs its action and leaves
+the state as it is, entering nothing: a push while the turnstile is locked
+sounds the alarm, and it stays locked. `none` as its action or its guard
+means there is none. An action is a functor, called with the event, the
+machine, the source state and the target state. The machine is the back-end,
+which derives from the front-end, so `machine.outcome` is the chart's own
+member, into which `sound_alarm` and `give_refund` write the result of their
+reply. The table is kept one row per line, between `clang-format off` and
+`on`.
+
+For an event the current state has no row for, MSM calls the front-end's
+`no_transition`, and the default one asserts, which would stop the program,
+where assertions are on, on a message the actor does not take. The chart
+defines one that ignores the message.
+
+The logic holds the back-end, an `msm::back::state_machine` of the
+`turnstile_chart`, and hands it each message:
+
+[source]
+----
+include::{examples}/xactor_msm.cpp[tag=logic,indent=0]
+----
+
+An MSM machine enters its initial state when `start()` is called, so the
+logic's constructor calls it, and the turnstile prints `locked` when
+`create_actor` constructs it. `handle` clears the outcome, visits the
+message, wraps the alternative it holds in an `on<>` with the turn, hands it
+to `process_event`, and returns the outcome: a reply that fails ends the
+actor with its error, as a failed send ends any logic that returns it.
+
+[#xactor-msm-build]
+=== Getting Boost.MSM
+
+Boost.MSM is used through its headers alone, which a Boost installation has
+beside Boost's other headers, so the program needs nothing more than xactor
+does. Neither xactor nor a program needs b2's target for the library,
+`/boost/msm//boost_msm`, and neither uses it: it brings every library MSM
+depends on, Boost.Serialization among them, which is compiled.
+
+The machine needs no exceptions: the program is built and run natively, and
+for wasm32-wasip2, a build without them, and wasm32-wasip3.

@@ -1,0 +1,115 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-timers]
+== Timers
+
+An actor that must act later arms a timer: `turn.wake_at(deadline, message)`
+keeps the message until the host's time reaches `deadline`, then puts it in
+the actor's own mailbox. xactor never reads a clock. Time is a number the host
+brings, with the scheduler's `clock_tick` or `release_next`, so a run with
+timers is as repeatable as one without, and a test moves time by any amount at
+once. The unit is the host's to choose; the example counts milliseconds.
+
+A kettle boils 100 ms after `start` and whistles 120 ms after it. Its boil is
+a keyed timer, under the key `"boil"`: `delay` arms the boil again under the
+same key, which replaces the one `start` armed, and `cancel` removes it. A
+deadline is a time, so the kettle computes each from the time the host
+brought last, `turn.now()`:
+
+[source]
+----
+include::{examples}/xactor_timers.cpp[tag=kettle,indent=0]
+----
+
+The host delivers `start` and then `delay`, each in an execution of its own,
+at the time 0, before any tick. `deliver`, a helper of the program, delivers
+one message from the host in the execution it is given and runs the system
+until no message is left; `print_timers` writes how many timers are armed and
+the earliest deadline, from the scheduler's `pending_timers()` and
+`next_deadline()`:
+
+[source]
+----
+include::{examples}/xactor_timers.cpp[tag=arm,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_timers.expected[lines=1..2]
+----
+
+`start` armed two timers, the boil at 100 and the whistle at 120. `delay`
+replaced the boil with one at 150, so two timers are still armed, and the
+earliest is now the whistle's.
+
+The host then brings the time, with `clock_tick` and with `release_next`:
+
+[source]
+----
+include::{examples}/xactor_timers.cpp[tag=tick,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_timers.expected[lines=3..6]
+----
+
+`clock_tick(130)` moves the time to 130 and releases every timer due by then,
+the whistle alone, into execution 3; the driver delivers it, and the kettle
+whistles at 130, the time of the tick, which is past the whistle's deadline.
+The boil, due at 150, waits. `release_next(200)` moves the time to 200 and
+releases only the first timer due by then, and returns whether there was one.
+With one timer due, both calls do the same; with several, a host that runs
+the system between two calls of `release_next` lets the handling of one timer
+cancel or replace a later one of the same tick, where `clock_tick` has
+released them all before any is handled.
+
+Last, at the time 200, `start` arms a boil at 300 and a whistle at 320, and
+`cancel` removes the boil before it is due:
+
+[source]
+----
+include::{examples}/xactor_timers.cpp[tag=cancel,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_timers.expected[lines=7..9]
+----
+
+The rules of timers:
+
+* *Order.* Due timers are released in the order of their deadlines, and
+  timers with the same deadline in the order they were armed. A timer that
+  replaces another is armed anew, and takes its place in that order from
+  then.
+* *Only the host moves time.* No timer fires without a `clock_tick` or a
+  `release_next` that reaches its deadline. `now()`, on the scheduler or the
+  turn, is the time the last of them brought, 0 before any, so a delay
+  becomes a deadline as `turn.now() + delay`.
+* *Released into the tick's execution.* A released timer's message belongs to
+  the execution the host gave `clock_tick` or `release_next`, and releasing it
+  costs nothing, since arming it was paid. Its envelope's `from` is the actor
+  itself.
+* *Keys belong to their actor.* `wake_at` with a key replaces this actor's
+  timer under that key, and `cancel_timer(key)` removes it, for free, and does
+  nothing when there is none. Two actors may use the same key. A keyed
+  `wake_at` that the execution cannot pay leaves the timer under its key as it
+  was.
+* *An ended actor has no timers.* An actor that ends, `done`, `error` or
+  `stopped`, loses its timers, and in the rest of the turn that ended it, its
+  `wake_at` is `invalid_argument`, and nothing is paid.
+* *Time can move back.* A tick earlier than the last moves `now` back: it
+  releases what is due by then, and a deadline computed afterwards from `now`
+  is earlier than one computed before it. A host that wants time to move
+  forward only never brings an earlier time.

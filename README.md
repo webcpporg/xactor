@@ -11,13 +11,10 @@ same messages the same way and write the same envelope log. Every message
 caused by one delivery from the host is paid from that delivery's fuel, and
 time moves only when the host brings it.
 
-```cpp
-#include <webcpp/xactor.hpp>
-```
-
-It needs Boost's headers and nothing to build or link. It runs natively, on
-wasm32-wasip2 and on wasm32-wasip3; a WASI build leaves out `asio_driver`,
-the one part that needs Boost.Asio.
+One header, `<webcpp/xactor.hpp>`, includes the whole library, whose names
+are in the namespace `webcpp::xactor`. It needs Boost's headers and nothing
+to build or link. It runs natively, on wasm32-wasip2 and on wasm32-wasip3; a
+WASI build leaves out `asio_driver`, the one part that needs Boost.Asio.
 
 ## Building and testing
 

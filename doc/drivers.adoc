@@ -1,0 +1,163 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-drivers]
+== Drivers
+
+The scheduler decides what a turn is, and a driver decides when turns happen:
+it calls the scheduler's `run_one` until no message is left, or until it has
+delivered as many as its host allows. So the same actors run under a plain
+loop in a program, one message at a time in a test, or on a Boost.Asio
+`io_context` beside other work, and every driver delivers the same messages in
+the same order. xactor's drivers are these:
+
+[cols="1,1,3",options="header"]
+|===
+| Driver | For | What it does
+
+| `fifo_driver`
+| A program, native or WASI
+| `run_until_idle(log)` delivers until no message is left, and returns how
+  many it delivered. `run_turn(n, log)` delivers at most `n`, for a host that
+  takes the thread back between turns.
+
+| `test_driver`
+| A test
+| `step()` and `step(log)` deliver exactly one message, and return whether
+  there was one. It has nothing else.
+
+| `asio_driver`
+| A native program built around an `io_context`
+| `run_until_idle(log)`, the same turns posted onto one strand of an
+  `io_context` the driver owns. A WASI build leaves it out.
+|===
+
+A driver is built over one scheduler, which it holds by reference. The
+`log`, an `xactor::envelope_log*`, is optional: `nullptr` records nothing.
+
+The example plays a rally between two players. A serve from the host tells a
+player whom to serve to, and each player returns the ball until the rally
+reaches 4:
+
+[source]
+----
+include::{examples}/xactor_drivers.cpp[tag=player,indent=0]
+----
+
+`set_up`, a helper of the program, creates two players, at the addresses 1 and
+2, and delivers the serve from the host to the first; `print` writes each
+entry of a log. The program sets up the same rally twice, on two schedulers.
+The first runs with a `test_driver`, one step at a time, recording each
+delivery:
+
+[source]
+----
+include::{examples}/xactor_drivers.cpp[tag=test_driver,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_drivers.expected[lines=1..6]
+----
+
+Five messages were delivered: the serve, from the host, whose address is 0,
+and four balls. Each entry shows the execution's fuel when its message was
+delivered: the serve cost nothing, and each ball one unit.
+
+`test_driver` is how a test drives actors: each `step` delivers one message,
+so after each one the test sees what that message changed, through
+`status_of`, `output_of`, `error_of` and `fuel_of`. A test that constructs a
+logic itself and hands it to the scheduler's `spawn` can keep a pointer to it
+and read its members too, since the scheduler owns the logic and never moves
+it. And a log recorded with `step(log)` is compared with the log the test
+expects, or with the log of another run of the same input, which must be
+equal (<<xactor-testing-actors>>).
+
+The second runs with a `fifo_driver`, first for at most two messages, then
+until none is left, and compares the two logs:
+
+[source]
+----
+include::{examples}/xactor_drivers.cpp[tag=fifo_driver,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_drivers.expected[lines=7..9]
+----
+
+`run_turn(2)` returned after two messages with work still waiting, and
+`run_until_idle` delivered the other three. However the run was cut, the
+deliveries were the same, and so are the logs.
+
+[#xactor-drivers-log]
+=== The envelope log
+
+The envelope log is the evidence that two runs, or two drivers, delivered the
+same messages the same way. `run_one` records an entry for every message it
+delivers, before the actor handles it, and nothing for a message that is
+dropped:
+
+[cols="1,3",options="header"]
+|===
+| Member of `logged_envelope` | What it holds
+
+| `sequence`
+| The message's sequence number.
+
+| `to`, `from`
+| Its receiver, and its sender, 0 for the host.
+
+| `correlation`
+| Its execution.
+
+| `remaining_fuel`
+| The fuel its execution had when it was delivered.
+
+| `payload_index`
+| Which alternative of the message variant it was, its `index()`.
+|===
+
+The log keeps which alternative arrived, not the message, so every entry has
+the same size and two logs compare cheaply, with `==`. `entries()` returns
+them in order. Two schedulers built with the same budgets and fed the same
+deliveries record equal logs, whatever driver runs them.
+
+[#xactor-drivers-asio]
+=== The Asio driver
+
+`asio_driver` delivers the same turns on Boost.Asio, for a native program
+built around it: the turns run as handlers on a strand of an `io_context` the
+driver owns, so the program's own threads and I/O objects live around the
+scheduler without entering a turn. The driver posts each `run_one` onto the
+strand and drains the context with `poll`, which runs what is ready and
+returns. It never calls the context's `run`, `run_one` or `run_for`, which
+would wait for more work, so a turn never blocks.
+
+This program runs the rally of the example above with a `fifo_driver`, and
+again with an `asio_driver`; it repeats the players and `set_up` of that
+example, as a program of its own:
+
+[source]
+----
+include::{examples}/xactor_asio.cpp[tag=asio_driver,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_asio.expected[]
+----
+
+This is the one program of the page built natively only: Boost.Asio 1.92 does
+not compile for wasm32-wasip2 or wasm32-wasip3 with wasi-sdk 34, so
+`drivers.hpp` leaves `asio_driver` out of a WASI build, and Boost.Asio's
+headers with it.

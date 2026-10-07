@@ -15,6 +15,9 @@ webcpp.example xactor_lifecycle.cpp ;
 webcpp.example xactor_fuel.cpp ;
 webcpp.example xactor_timers.cpp ;
 webcpp.example xactor_drivers.cpp ;
+# A test of actors, with lightweight_test: it prints nothing on its standard
+# output, and returns boost::report_errors().
+webcpp.example xactor_testing.cpp ;
 # A static actor, whose behaviour is a Boost.MSM state machine.
 webcpp.example xactor_msm.cpp ;
 # Native only: Boost.Asio 1.92 does not compile for wasm32-wasip2 or

@@ -1,0 +1,117 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-fuel]
+== Fuel
+
+Every message belongs to an execution, named by a `correlation_id`. A
+delivery from the host opens its execution, and every message that delivery
+causes, directly or through any number of actors, belongs to the same one.
+An execution has one reservoir of fuel, the `fuel` of the scheduler's
+`budgets`, and every actor in it pays from that reservoir: one unit for each
+message it sends and each timer it arms, and the units it declares for its own
+work.
+
+Fuel exists so that the total work of an execution is bounded, whatever shape
+its messages take: a chain of messages, a fan-out, two actors that answer each
+other forever, or an actor that computes a lot and sends little. A host that
+runs actors it does not trust, or that must answer within a budget, knows that
+every delivery it makes ends.
+
+The smallest example is an actor that sends itself a message on every turn,
+for as long as the execution can pay, and prints the fuel left at the start of
+each turn:
+
+[source]
+----
+include::{examples}/xactor_fuel.cpp[tag=relay,indent=0]
+----
+
+With a budget of 3, the host delivers `start` in execution 1:
+
+[source]
+----
+include::{examples}/xactor_fuel.cpp[tag=chain,indent=0]
+----
+
+`spelling`, a helper of the program, writes a status as its name. It prints:
+
+[listing]
+----
+include::{examples}/xactor_fuel.expected[lines=1..6]
+----
+
+The host's `start` costs nothing, so the relay's first turn sees all 3 units.
+Each send takes one, so the fourth turn finds none: its send fails with
+`resource_limit`, nothing is sent, and the run ends after four deliveries. A
+refusal is a value the logic decides about. The relay prints it and returns
+success, so it stays `active`, ready for the next execution.
+
+A second delivery with another correlation opens a second execution, with
+fuel of its own:
+
+[source]
+----
+include::{examples}/xactor_fuel.cpp[tag=executions,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_fuel.expected[lines=7..12]
+----
+
+Execution 2 runs the same four turns on its own 3 units, and execution 1 still
+has none: fuel is never refilled. Two deliveries with the same correlation
+share one execution, and a delivery to an execution that has spent all its
+fuel delivers its message, whose sends are then refused. A host gives each
+input a correlation of its own.
+
+An actor that computes without sending declares what its work costs with
+`spend`, so that it is bounded too. This worker pays 2 units on every turn,
+then sends itself a message, and returns a refusal instead of ignoring it:
+
+[source]
+----
+include::{examples}/xactor_fuel.cpp[tag=worker,indent=0]
+----
+
+[source]
+----
+include::{examples}/xactor_fuel.cpp[tag=spend,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_fuel.expected[lines=13]
+----
+
+The first turn spends 2 of the 3 units and sends with the last one. The second
+turn's `spend(2)` finds none, and fails with `resource_limit`; the worker
+returns the failure, which ends it with the status `error`, and `error_of`
+keeps the code.
+
+The rules of fuel:
+
+* *What costs.* Inside a turn, `send` and `reply` cost one unit, `wake_at`,
+  with a key or without, one unit, and `spend(n)` n units, all from the
+  execution of the message being handled. `spawn_child`, `stop_child`,
+  `stop`, `finish`, `cancel_timer`, `self`, `parent`, `now` and `fuel` cost
+  nothing, and so does a delivery from the host.
+* *All or nothing.* What the execution cannot pay fails with
+  `resource_limit` and changes nothing: no message is enqueued, no timer
+  armed, no unit spent. `spend` takes all its units or none, and a keyed
+  `wake_at` that is refused leaves the timer under its key as it was.
+* *Opening an execution.* The first `deliver`, `clock_tick` or `release_next`
+  of a correlation opens its execution with the whole budget. A timer that a
+  tick releases belongs to the tick's execution, and releasing it costs
+  nothing, since arming it was paid (<<xactor-timers>>).
+* *Reading it.* `turn.fuel()` is the fuel the execution of the message being
+  handled has left, and the scheduler's `fuel_of(correlation)` the same from
+  outside; for an execution not yet opened, `fuel_of` is the whole budget.

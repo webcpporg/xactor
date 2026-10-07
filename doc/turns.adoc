@@ -1,0 +1,108 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-turns]
+== Turns
+
+A turn is one delivery: the scheduler calls an actor's `handle` with one
+message and an `xactor::turn<Message>`, and the turn is everything the actor
+may do to the system while it handles that message. The logic never sees the
+scheduler, so every effect goes through the turn, which knows the actor that
+is acting and the execution the message belongs to: a message the actor sends
+carries it as its sender, and is paid from the fuel of that execution.
+
+The turn lives for one `handle`. It holds references to the scheduler and to
+the message, so a logic never keeps it, nor a reference into the message.
+
+[cols="3,5,1",options="header"]
+|===
+| Call | What it does | Fuel
+
+| `send(to, message)`
+| Sends a message to an actor, itself included.
+| 1
+
+| `reply(message)`
+| Sends a message to the sender of the message being handled, in its
+  execution.
+| 1
+
+| `spawn_child<Logic>(inputs)`
+| Constructs a `Logic` from `inputs` and runs it as a new actor of the same
+  system, a child of this one. Returns its `actor_ref` (<<xactor-lifecycle>>).
+| 0
+
+| `stop_child(child)`
+| Stops a child of this actor and every actor below it. Returns the actors it
+  stopped (<<xactor-lifecycle>>).
+| 0
+
+| `finish(output)`
+| Ends this actor with an output: it becomes `done`, and receives nothing
+  more. Once only.
+| 0
+
+| `stop()`
+| Ends this actor as `stopped`, alone: its children are its logic's to stop.
+  Once only.
+| 0
+
+| `wake_at(deadline, message)`
+| Arms a timer: the message comes back to this actor when the host's time
+  reaches `deadline` (<<xactor-timers>>).
+| 1
+
+| `wake_at(deadline, message, key)`
+| The same, replacing this actor's timer under `key`.
+| 1
+
+| `cancel_timer(key)`
+| Removes this actor's timer under `key`, if it has one.
+| 0
+
+| `now()`
+| The time the host brought last (<<xactor-timers>>).
+| 0
+
+| `spend(units)`
+| Pays for work this actor does itself, all the units or none
+  (<<xactor-fuel>>).
+| `units`
+
+| `fuel()`
+| The fuel this execution has left.
+| 0
+
+| `self()`, `parent()`
+| This actor, and the actor whose turn spawned it, none for an actor the host
+  created.
+| 0
+|===
+
+The quick start's logics use some of these calls
+(<<xactor-quick-start>>): the counter sends its asks with `send` and ends with
+`finish`, and the echo answers with `reply`, so it never needs to know who
+asked. The sections that follow show the others at work: `spend` and `fuel` in
+<<xactor-fuel>>, `wake_at`, `cancel_timer` and `now` in <<xactor-timers>>, and
+`spawn_child` in <<xactor-lifecycle>>.
+
+The rules of a turn:
+
+* *A send is queued.* A message sent waits in its target's mailbox, and its
+  target handles it in a turn of its own, later, in the order of the queue;
+  nothing an actor sends runs inside its own `handle`.
+* *A reply needs a sender.* A message from the host has none, and a reply to
+  it is `invalid_argument`.
+* *Every call that can fail returns a `result`,* and changes nothing when it
+  fails. The logic returns the failure to end its actor with it, or goes on.
+* *An address must name an actor.* A `send` to an address that names no actor
+  is `invalid_argument`, and nothing is paid. A `send` to an actor that has
+  ended is paid, and the message is dropped, as every message to an actor
+  that has ended is (<<xactor-lifecycle>>).
+* *The rest of the turn runs after `finish` or `stop`.* The actor receives
+  nothing more, and in the rest of that turn it can still send, but a
+  `wake_at` or a `spawn_child` is `invalid_argument`, and nothing is paid or
+  constructed.

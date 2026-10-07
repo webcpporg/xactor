@@ -1,0 +1,102 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-quick-start]
+== Quick start
+
+This program has two actors. A counter asks an echo for the numbers 1, 2 and
+3, one message each. The echo answers each with the same number, and once the
+counter has its three answers, it finishes with their sum. The host, the code
+around the actors, creates both, sends the counter one message, and runs the
+actors until no message is left.
+
+The program begins with xactor's header and an alias for its namespace:
+
+[source]
+----
+include::{examples}/xactor_quick_start.cpp[tag=includes,indent=0]
+----
+
+The messages are plain structs, and the message type of the actors is one
+`std::variant` of all of them. Every type of xactor that carries a message is
+a template over that variant:
+
+[source]
+----
+include::{examples}/xactor_quick_start.cpp[tag=messages,indent=0]
+----
+
+What an actor does is its logic: a class derived from
+`xactor::actor_logic<message>`, whose one `handle` is called with one message
+at a time. The message arrives in an envelope, `cause`, which holds it as
+`cause.payload`, and everything the actor does to other actors it does through
+its turn, `turn`. The echo replies to whoever asked. The counter is created
+with the echo's `actor_ref`, the name of the actor it asks; on `start` it sends
+three asks, and it adds up the answers until it has three, when it finishes
+with the total:
+
+[source]
+----
+include::{examples}/xactor_quick_start.cpp[tag=logics,indent=0]
+----
+
+The host creates a scheduler, the system that holds the actors, with a budget
+of 100 units of fuel for each execution. It creates the two actors with
+`create_actor`, which constructs a logic from the arguments after the
+scheduler and returns the new actor's `actor_ref`. It delivers `start` to the
+counter in execution 1, and runs a `fifo_driver` until no message is left.
+Then it reads what the counter finished with, and the fuel execution 1 has
+left:
+
+[source]
+----
+include::{examples}/xactor_quick_start.cpp[tag=host,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_quick_start.expected[]
+----
+
+Seven messages were delivered: the host's `start`, three asks and three
+answers. Each ask the counter sent and each answer the echo replied cost one
+unit of fuel, and the host's `start` cost nothing, so execution 1 has 94 of its
+100 units left. Every call that can fail returns a `result`, and the program
+checks each one: xactor reports a failure as a value and throws nothing.
+
+[#xactor-quick-start-build]
+=== Building it
+
+xactor needs Boost's headers and nothing compiled. From the root of a webcpp
+checkout, with the program copied as `quick_start.cpp`, this command builds
+it:
+
+[source,bash]
+----
+clang++ -std=c++20 -I libs/xactor/include quick_start.cpp -o quick_start
+----
+
+A compiler that does not find Boost on its default include path is given
+Boost's `include` directory with `-isystem`: for Homebrew's Boost, the one
+under `/opt/homebrew/opt/boost`. Without exceptions, the program also needs a
+definition of `boost::throw_exception`, which Boost.System's `result` names:
+webcpp's `tools/throw_exception.cpp` reports what was thrown on the standard
+error and aborts, since in such a build a throw is a defect, never a
+condition.
+
+[source,bash]
+----
+clang++ -std=c++20 -fno-exceptions -DBOOST_NO_EXCEPTIONS -I libs/xactor/include \
+    quick_start.cpp tools/throw_exception.cpp -o quick_start
+----
+
+In the checkout, `b2 libs/xactor/example` builds and runs this program with
+every other program of `libs/xactor/example/`, and compares what each prints
+with the output this page shows (<<xactor-testing>>). A b2 project uses
+xactor through `/webcpp/xactor//xactor`, which adds xactor's headers and
+Boost's to whatever names it.

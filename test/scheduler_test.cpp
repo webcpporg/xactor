@@ -578,7 +578,7 @@ void release_next_releases_one_due_timer_at_a_time() {
 }
 
 // Invariant: deliver refuses an address that names no actor, and changes
-// nothing (doc: #reference-xactor-scheduler).
+// nothing (doc: #xactor-scheduler).
 void deliver_refuses_an_address_that_names_no_actor() {
     scheduler system(plenty);
     if (!BOOST_TEST(system.spawn(std::make_unique<recorder>()).has_value())) {

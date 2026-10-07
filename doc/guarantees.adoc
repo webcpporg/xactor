@@ -1,0 +1,141 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-guarantees]
+== Guarantees
+
+What xactor promises whatever its caller does: the rules its results keep,
+which the sections above teach and the tests check. A guarantee keeps its
+number, and the anchor named after it, so a comment of the code or of a test
+cites it by that anchor: `+(doc: #xactor-invariant-13)+` sends its reader to
+the thirteenth guarantee. `b2 libs/xactor/doc`, which builds this page, fails
+on a citation that names no anchor of it.
+
+The scheduler, its turns, its drivers and its log:
+
+. [[xactor-invariant-1]]The messages of one mailbox are handled in the
+order they were enqueued.
+. [[xactor-invariant-2]]`run_one` takes the actor at the front of the queue
+and puts it back at the end while its mailbox is not empty, so delivery is
+first-in first-out across actors too.
+. [[xactor-invariant-3]]An actor is in the queue at most once.
+. [[xactor-invariant-4]]`run_one` handles exactly one message, and returns
+`false` only when the scheduler is idle. A handler that returns an error
+ends its actor with the status `error` and keeps the error for `error_of`,
+unless its turn had already ended the actor, which then stays as it ended;
+`run_one` still returns `true`, and every other actor keeps its turns.
+. [[xactor-invariant-5]]`deliver`, `send`, `reply` and a released timer put
+an active target actor in the queue when it is not there; a message to an
+actor that has ended is dropped (<<xactor-invariant-23,guarantee 23>>).
+. [[xactor-invariant-6]]Each `correlation_id` names one execution. The first
+`deliver`, `clock_tick` or `release_next` that names it opens it with
+`budgets.fuel`, and nothing refills it: a later delivery with the same
+correlation shares what it has left. A delivery from the host costs no
+fuel.
+. [[xactor-invariant-7]]Inside a turn, `send` and `reply` cost one unit,
+`wake_at`, with a key or without, one unit and `spend(n)` n units, all from
+the execution of the message being handled; `spawn_child`, `stop_child`,
+`stop`, `finish`, `cancel_timer`, `self`, `parent`, `now` and `fuel` cost
+nothing.
+. [[xactor-invariant-8]]What the execution cannot pay fails with
+`resource_limit` and changes nothing: nothing is enqueued, armed or spent,
+and a keyed `wake_at` leaves the timer under its key armed. `spend` takes
+all its units or none.
+. [[xactor-invariant-9]]`turn::fuel` is the fuel the execution of the
+message being handled has left; `scheduler::fuel_of` the same from outside,
+and the whole budget for an execution not yet opened.
+. [[xactor-invariant-10]]`reply` sends to the sender of the message being
+handled, in its execution. A message from the host has no sender, and a
+reply to it is `invalid_argument`, as a `send` to an address that names no
+actor is; neither is paid.
+. [[xactor-invariant-11]]Timers fire only for a deadline at or before the
+time the host brought, in (deadline, arming order) order. A timer replaced,
+cancelled or dropped never fires; a replacement takes a new arming order.
+. [[xactor-invariant-12]]No timer fires without a `clock_tick` or a
+`release_next` that reaches its deadline: time never advances by itself.
+. [[xactor-invariant-13]]A timer released by a `clock_tick` or a
+`release_next` belongs to that call's execution, and its message's sender
+is its own actor; releasing it costs nothing, since arming it was paid.
+. [[xactor-invariant-14]]`run_until_idle` returns only when `idle()` is
+true, and `run_turn(n)` handles at most n messages.
+. [[xactor-invariant-15]]`fifo_driver` and `asio_driver` produce identical
+envelope logs for the same deliveries.
+. [[xactor-invariant-16]]An envelope log given to `run_one` records
+{sequence, to, from, correlation, the fuel the execution had when the
+message was delivered, payload index} for every message delivered, before
+its actor handles it, and nothing for a dropped one.
+. [[xactor-invariant-17]]Two schedulers built with the same budgets and fed
+the same deliveries produce identical envelope logs.
+. [[xactor-invariant-18]]xactor reads no clock, no disk and no network.
+. [[xactor-invariant-19]]No turn blocks: nothing calls `io_context::run`,
+`run_one` or `run_for`.
+. [[xactor-invariant-20]]xactor throws no exception and needs no RTTI:
+every operation that can fail returns a `result`, and the library compiles
+and runs with exceptions and RTTI turned off.
+. [[xactor-invariant-21]]There is no static mutable state: two schedulers
+in one process are independent.
+. [[xactor-invariant-22]]`test_driver` exposes `step`, exactly one
+`run_one`, with or without a log, and nothing else; messages reach its
+scheduler through `deliver`.
+. [[xactor-invariant-23]]A spawned actor is active. Only an active actor
+receives messages: once it is done, error or stopped, its pending messages
+are dropped, and every later message to it is dropped too, never delivered
+and never logged. Dropping is not an error of the sender's: a `send` to an
+actor that has ended succeeds, and is paid.
+. [[xactor-invariant-24]]`finish(output)` makes the actor handling the
+message done and keeps the output for `output_of`. An actor ends once: a
+`finish` once it has ended, a second `finish` or one after `stop()`, fails
+with `invalid_argument` and changes nothing.
+. [[xactor-invariant-25]]`stop` stops an actor and its family as
+`stop_child` does (<<xactor-invariant-31,guarantee 31>>) and returns the
+actors it stopped; an ended one stays as it ended.
+. [[xactor-invariant-26]]`output_of` is `nullptr` unless the status is
+`done`; `error_of` is empty unless the status is `error`.
+. [[xactor-invariant-27]]The values of `status` never change: `active` 1,
+`done` 2, `error` 3, `stopped` 4.
+. [[xactor-invariant-28]]The library names no message, id or error of any
+user. It asks of `Message` only that it be a `std::variant` that can be
+moved, whose `index()` the log records.
+. [[xactor-invariant-29]]`+create_actor<Logic>(system, inputs...)+` and a
+turn's `+spawn_child<Logic>(inputs...)+` construct a `Logic` from `inputs`
+and run it as a new, active actor of the same system, returning its
+`actor_ref`; `spawn` does the same for a logic already constructed, and
+refuses a null one with `invalid_argument`. A turn of an actor that has
+ended refuses `spawn_child` before it constructs anything.
+. [[xactor-invariant-30]]A child spawned in a turn records the actor of
+that turn as its parent, and the parent records its children in spawn
+order; `turn::parent` returns the parent, and nothing for an actor the host
+spawned. `turn::self` is the actor handling the message.
+. [[xactor-invariant-31]]`turn::stop_child(child)` stops `child` and every
+actor descended from it that is still active, each after all of its own
+descendants and siblings in spawn order, and returns them in that order; their mailboxes and timers are dropped, and
+a member that had already ended stays as it ended while its descendants are
+still stopped. It is `invalid_argument` for anything but a child of the
+caller (the caller itself, a grandchild, an address that names no actor),
+which changes nothing. The caller is never in the family.
+. [[xactor-invariant-32]]`wake_at(deadline, message, key)` replaces the same
+actor's timer under `key`; `cancel_timer(key)` removes it; keys belong to
+their actor.
+. [[xactor-invariant-33]]An actor that ends, done, error or stopped, loses
+its timers, and an actor that is no longer active, in the rest of the turn
+that ended it, arms no timer and spawns no child: `wake_at` and
+`spawn_child` are `invalid_argument` and nothing is paid. `send` still
+works.
+. [[xactor-invariant-34]]`now()` is the time the last `clock_tick` or
+`release_next` brought, 0 before any; `next_deadline()` the earliest
+deadline armed, none while no timer is. A tick earlier than the last moves
+`now` back: it releases what is due by then, and a deadline computed
+afterwards from `now` is earlier than one computed before it.
+. [[xactor-invariant-35]]`turn::stop()` ends the actor handling the message
+as stopped, alone: its children are its logic's to stop, as after
+`finish`. It costs nothing, the rest of the turn runs as after `finish`,
+and a `stop()` once the actor has ended, a second one or one after
+`finish`, is `invalid_argument`.
+. [[xactor-invariant-36]]`release_next(now, correlation)` moves time to
+`now` and releases the first timer due by then, as `clock_tick` would
+release it, and says whether there was one; a host that runs the system
+between two releases lets a timer's handling cancel or replace a later one
+of the same tick.

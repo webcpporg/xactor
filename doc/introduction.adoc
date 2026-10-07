@@ -1,0 +1,82 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#introduction]
+== Introduction
+
+An actor is an independent object that reaches others only by messages: it
+has its own state, which only it changes, in response to a message it
+receives, and it handles one message at a time. So each actor can be
+understood on its own, and tested by the messages it takes and sends. xactor
+runs actors in that model, and promises a program what it can build on:
+
+* *The same input makes the same run.* The actors run on one thread, the
+  host's, and the order in which they receive their messages depends only on
+  the order the messages were sent. Two runs of the same deliveries, under any
+  of xactor's drivers, deliver the same messages in the same order, and record
+  the same envelope log to prove it.
+* *Every execution ends.* All the work that one message from the host causes
+  is an execution, and an execution has a budget of fuel, from which every
+  message its actors send is paid. No chain or storm of messages runs forever.
+* *Time is the host's.* xactor reads no clock. An actor that must act later
+  arms a timer, which fires when the host brings a time that reaches it, so a
+  run with timers is as repeatable as one without.
+
+The behaviour of an actor is {cpp} code. It can be dynamic, a class whose
+`handle` decides at run time what each message does, or static, a state
+machine compiled into the program, here with Boost.MSM
+(<<xactor-static-actors>>). A library can build on xactor too: webcpp's
+https://github.com/webcpporg/xstate[xstate] builds its actor layer on it.
+
+[#xactor-requirements]
+=== Requirements
+
+* *A {cpp}20 compiler.* xactor's tests and examples are built and run
+  natively, and for wasm32-wasip2 and wasm32-wasip3 with the Clang of
+  wasi-sdk, under wasmtime (<<xactor-testing>>).
+* *Boost's headers, 1.92 or newer.* xactor uses Boost.System, for `result`
+  and the error codes, and, outside a WASI build, Boost.Asio, for its Asio
+  driver. It is header-only, and nothing of Boost is compiled for it.
+* *Without exceptions, a definition of `boost::throw_exception`.* xactor
+  throws nothing, and it is built and tested with exceptions and RTTI turned
+  off as well as on. Boost.System's `result` still names
+  `boost::throw_exception` then, and the program defines it
+  (<<xactor-quick-start>>). A program built with exceptions needs nothing
+  here, since Boost defines the function then.
+* *Nothing else:* no RTTI, no threads, no clock, and no global or static
+  mutable state.
+
+[#xactor-reading]
+=== Reading this page
+
+One header, `<webcpp/xactor.hpp>`, includes the whole library, whose names
+are in the namespace `webcpp::xactor`. Each header of `<webcpp/xactor/>` may
+also be included alone. The code of this page writes the names as
+`xactor::scheduler`, as after `namespace xactor = webcpp::xactor;`, which
+every example declares.
+
+<<xactor-quick-start,The quick start>> builds a first program, and
+<<xactor-model,the model>> explains its parts: the messages, the logic of
+the actors, the scheduler that hosts them. <<xactor-logic>> and
+<<xactor-scheduler>> take the parts a program writes and calls most, and
+<<xactor-turns>> lists what an actor can do while it handles a message. The
+sections after it take what bounds and moves a run:
+<<xactor-fuel,fuel>>, <<xactor-timers,timers>>, the
+<<xactor-lifecycle,lifecycle>> of an actor and its children, and the
+<<xactor-drivers,drivers>> that decide when turns happen.
+<<xactor-static-actors>> gives an actor a compile-time state machine for its
+behaviour, and <<xactor-determinism>> says what an actor must not do, so
+that its runs stay the same. <<xactor-testing>> shows how a program tests its actors, and
+how xactor itself is tested. <<xactor-guarantees>> lists what xactor
+promises whatever its caller does, each promise under a number that the
+code and the tests cite. The <<reference,reference>> and the
+<<glossary,glossary>> close the page.
+
+xactor leaves to the program, or to a library built on it, what an actor
+system may add on top of it: a child's end reaching its parent, a registry
+of actors by name, and the inspection of what each actor does. A child that
+must tell its parent that it ended sends it a message, to `turn.parent()`,
+in the turn it ends (<<xactor-lifecycle>>).

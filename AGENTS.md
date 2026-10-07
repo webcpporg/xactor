@@ -34,10 +34,14 @@ holds only what is specific to xactor.
   uses `asio_driver` is inside `#ifndef __wasi__`, the condition under which
   `drivers.hpp` declares it. `test/CONVERSION.md` records the conversion from
   Boost.Test, case by case.
-- **The page.** The `// tag::<name>[]` and `// end::<name>[]` lines of the
-  examples mark what xactor's page includes; the `@see` of a Doc Comment
-  names a section of its guide by title, and a `(doc: #<anchor>)` in a `//`
-  comment names one by anchor. Keep all of them in step with `doc/`.
+- **The page.** `doc/xactor.adoc` and the sections it includes are xactor's
+  page, which `b2 libs/xactor/doc` builds with the MrDocs reference. The
+  `// tag::<name>[]` and `// end::<name>[]` lines of the examples mark what
+  it includes; the `@see` of a Doc Comment names a section of its guide by
+  title, and a `(doc: #<anchor>)` in a `//` comment names one by anchor. The
+  build fails on a title or an anchor that names no section, so a section
+  renamed changes them in the same commit. Any count the page states would be
+  typed by hand, so it states none of the tree's.
 - **The reference.** Every public symbol has a Doc Comment, which MrDocs
   turns into the API reference, strict: `b2 libs/xactor/doc//reference`
   fails on any symbol, parameter or return value left undocumented.
