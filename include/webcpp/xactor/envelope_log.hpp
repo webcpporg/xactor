@@ -37,7 +37,10 @@ struct logged_envelope {
     /** The actor it was delivered to. */
     actor_ref to{};
 
-    /** The actor that sent it; address zero when the host did. */
+    /**
+     The actor that sent it: address zero when the host did, and the actor
+     itself for the message of one of its timers.
+    */
     actor_ref from{};
 
     /** The execution it belonged to. */
@@ -95,7 +98,9 @@ public:
     /**
      The entries, in the order they were recorded.
 
-     @return The entries, one for each message delivered.
+     @return The entries, one for each delivery recorded in this log: a
+     @ref scheduler::run_one given `nullptr`, or another log, records nothing
+     here.
     */
     [[nodiscard]] const std::vector<logged_envelope>& entries() const noexcept { return entries_; }
 

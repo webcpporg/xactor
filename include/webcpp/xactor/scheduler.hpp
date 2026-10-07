@@ -769,7 +769,7 @@ public:
      Pays `units` of fuel for work this actor does itself, all of them or
      none.
 
-     An actor that computes without sending is bounded too.
+     It lets an actor that computes without sending bound its work too.
 
      @param units The fuel to pay.
      @return Success; @ref errc::resource_limit, and nothing spent, when the

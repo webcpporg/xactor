@@ -113,7 +113,8 @@ private:
  One message per step, so a test observes exactly what one delivery changed.
 
  A step is one @ref scheduler::run_one, and the driver has nothing else:
- messages reach its scheduler through @ref scheduler::deliver.
+ the host brings messages with @ref scheduler::deliver, and time with
+ @ref scheduler::clock_tick or @ref scheduler::release_next.
 
  @tparam Message The type of every message of the system.
 
@@ -163,8 +164,9 @@ private:
 
  @tparam Message The type of every message of the system.
 
- @note The context is drained with `poll` under a work guard; `run`,
- `run_one` and `run_for` would block in pause, which on WASI aborts.
+ @note The context is drained with `poll` under a work guard: the guard keeps
+ the context from running out of work, so `run` would never return, and
+ `run_one` and `run_for` would block waiting for more.
 
  @see "The Asio driver", in the guide.
 */

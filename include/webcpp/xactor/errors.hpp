@@ -134,10 +134,12 @@ inline boost::system::error_code make_error_code(errc code) noexcept {
  What an operation that can fail returns: a `T`, or the `error_code` of the
  failure.
 
- It is Boost.System's `result`. xactor throws nothing of its own: an
- operation of it that can fail returns one, and changes nothing when it
- fails. Test it with `has_value()` before reading the value: `*` of a failed
- result is undefined, and its `value()` reports the failure through
+ It is Boost.System's `result`. xactor throws nothing of its own: every
+ operation of it that can fail returns one. An operation of a @ref scheduler
+ or of a @ref turn changes nothing when it fails, while a driver returns the
+ failure that stopped it after the deliveries it has already made. Test it
+ with `has_value()` before reading the value: `*` of a failed result is
+ undefined, and its `value()` reports the failure through
  `boost::throw_exception`.
 
  @tparam T The type of the value; `void` for an operation that returns none.
