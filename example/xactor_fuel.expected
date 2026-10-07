@@ -1,0 +1,13 @@
+relay: fuel 3
+relay: fuel 2
+relay: fuel 1
+relay: fuel 0
+relay: refused, resource_limit
+delivered 4, relay is active
+relay: fuel 3
+relay: fuel 2
+relay: fuel 1
+relay: fuel 0
+relay: refused, resource_limit
+execution 1 has 0 left, execution 2 has 0 left
+worker is error (resource_limit), execution 3 has 0 left

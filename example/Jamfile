@@ -1,0 +1,24 @@
+# Copyright (c) 2026 WebCpp.org
+#
+# Distributed under the Boost Software License, Version 1.0. (See
+# accompanying file LICENSE_1_0.txt or copy at
+# https://www.boost.org/LICENSE_1_0.txt)
+
+project : requirements <library>/webcpp/xactor//xactor ;
+
+import webcpp ;
+
+webcpp.targets native wasip2 wasip3 ;
+
+webcpp.example xactor_quick_start.cpp ;
+webcpp.example xactor_lifecycle.cpp ;
+webcpp.example xactor_fuel.cpp ;
+webcpp.example xactor_timers.cpp ;
+webcpp.example xactor_drivers.cpp ;
+# A static actor, whose behaviour is a Boost.MSM state machine.
+webcpp.example xactor_msm.cpp ;
+# Native only: Boost.Asio 1.92 does not compile for wasm32-wasip2 or
+# wasm32-wasip3 with wasi-sdk 34 (no ESHUTDOWN, no ::pause, and a signal.h
+# that stops with #error), so drivers.hpp declares asio_driver only outside
+# WASI.
+webcpp.example xactor_asio.cpp : : native ;

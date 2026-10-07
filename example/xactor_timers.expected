@@ -1,0 +1,9 @@
+timers 2, next deadline 100
+timers 2, next deadline 120
+whistle at 130
+timers 1, next deadline 150
+boiled at 200
+timers 0, next deadline none
+timers 1, next deadline 320
+whistle at 400
+timers 0, next deadline none

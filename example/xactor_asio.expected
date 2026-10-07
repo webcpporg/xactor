@@ -1,0 +1,2 @@
+fifo_driver delivered 5, asio_driver delivered 5
+the two logs are equal: true
