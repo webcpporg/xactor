@@ -14,7 +14,7 @@ holds only what is specific to xactor.
   enqueue order alone, time moves only through `clock_tick` and
   `release_next`, and every driver writes the same envelope log for the same
   run. A change that makes a run depend on anything else is a bug.
-- **Errors are values.** Every operation returns `result<T>`, a
+- **Errors are values.** Every operation that can fail returns `result<T>`, a
   `boost::system::result` whose errors are of the category `webcpp.xactor`,
   and xactor throws nothing of its own, so it builds with exceptions and RTTI
   off: on wasip2, and in every test's `-noexcept` variant.
@@ -35,6 +35,10 @@ holds only what is specific to xactor.
   `drivers.hpp` declares it. `test/CONVERSION.md` records the conversion from
   Boost.Test, case by case.
 - **The page.** The `// tag::<name>[]` and `// end::<name>[]` lines of the
-  examples mark what xactor's page includes, and the `(doc: #<anchor>)`
-  references of the headers name its sections; keep both in step with
-  `doc/`.
+  examples mark what xactor's page includes; the `@see` of a Doc Comment
+  names a section of its guide by title, and a `(doc: #<anchor>)` in a `//`
+  comment names one by anchor. Keep all of them in step with `doc/`.
+- **The reference.** Every public symbol has a Doc Comment, which MrDocs
+  turns into the API reference, strict: `b2 libs/xactor/doc//reference`
+  fails on any symbol, parameter or return value left undocumented.
+  `doc/mrdocs.yml` gives each enumerator a section of its own.

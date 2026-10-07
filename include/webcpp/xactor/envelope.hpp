@@ -6,8 +6,9 @@
 
 /**
  One delivery: who it is for, who sent it, the execution it belongs to, its
- place in the delivery order, and the message
- (doc: #reference-xactor-envelope-hpp).
+ place in the delivery order, and the message.
+
+ @see "The model", in the guide.
 */
 #ifndef WEBCPP_XACTOR_ENVELOPE_HPP
 #define WEBCPP_XACTOR_ENVELOPE_HPP
@@ -16,13 +17,35 @@
 
 namespace webcpp::xactor {
 
+/**
+ A message as the scheduler delivers it, and as @ref actor_logic::handle
+ receives it.
+
+ The scheduler makes every envelope; a program reads them.
+
+ @tparam Message The type of every message of the system.
+*/
 template <class Message>
 struct envelope {
+    /** The actor it is for. */
     actor_ref to{};
-    // Address zero when the host sent it.
+
+    /**
+     The actor that sent it: address zero when the host sent it, and the
+     actor itself for the message of one of its timers.
+    */
     actor_ref from{};
+
+    /** The execution it belongs to, which pays for what its handling sends. */
     correlation_id correlation{};
+
+    /**
+     Its place in the order messages entered a mailbox, across every actor of
+     the scheduler: 1 for the first.
+    */
     sequence_number sequence{};
+
+    /** The message. */
     Message payload{};
 };
 

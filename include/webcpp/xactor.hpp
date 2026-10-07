@@ -5,7 +5,9 @@
 // https://www.boost.org/LICENSE_1_0.txt)
 
 /**
- The whole library: include this one header to use xactor (doc: #xactor).
+ The whole library: include this one header to use xactor.
+
+ @see "Introduction", in the guide.
 */
 #ifndef WEBCPP_XACTOR_HPP
 #define WEBCPP_XACTOR_HPP
