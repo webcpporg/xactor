@@ -1,0 +1,136 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-lifecycle]
+== Lifecycle
+
+Every actor has a status, which `status_of` returns. It starts `active`, the
+one status in which it receives messages, and it ends in one of the others,
+each final:
+
+[cols="1,1,3,2",options="header"]
+|===
+| Status | Value | How an actor gets it | What it keeps
+
+| `active`
+| 1
+| Every actor starts here: `create_actor`, `spawn` and a turn's `spawn_child`
+  create it active.
+| Its mailbox and its timers.
+
+| `done`
+| 2
+| Its turn called `finish(output)`.
+| The output, for `output_of`.
+
+| `error`
+| 3
+| Its `handle` returned an error.
+| The error, for `error_of`.
+
+| `stopped`
+| 4
+| The host's `stop`, its parent's `stop_child`, or either of them for one of
+  its ancestors, stopped it; or its own turn called `stop()`.
+| Nothing.
+|===
+
+The values are fixed and never reused, because a system that persists its
+actors rebuilds them from these numbers.
+
+Actors form families. An actor spawned in a turn is a child of that turn's
+actor: it records the actor as its parent, which `turn.parent()` returns, and
+the parent records its children in the order it spawned them. An actor the
+host created has no parent. A family is stopped together, from its parent or
+by the host, each actor after its own descendants, siblings in the order they
+were spawned.
+
+In the example, a supervisor spawns three children, each of which ends
+differently or not at all:
+
+[source]
+----
+include::{examples}/xactor_lifecycle.cpp[tag=children,indent=0]
+----
+
+On `start`, the supervisor spawns them, in this order, and gives each work:
+
+[source]
+----
+include::{examples}/xactor_lifecycle.cpp[tag=supervisor,indent=0]
+----
+
+The host creates the supervisor, delivers `start`, and runs the system until no
+message is left. `print_statuses`, a helper of the program, writes the status
+of the actors at the addresses 1 to 4, and `spelling` a status as its name:
+
+[source]
+----
+include::{examples}/xactor_lifecycle.cpp[tag=run,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_lifecycle.expected[lines=1..6]
+----
+
+The supervisor is actor 1, and its children took the next addresses in the
+order it spawned them: the doubler 2, the failing child 3 and the idle one 4.
+The doubler finished with 42 and is `done`; the failing child returned
+`invalid_argument` and ended with the status `error`, while the rest of the
+system went on; the idle child and the supervisor are still `active`. Neither
+of the children that ended told the supervisor: xactor does not tell a parent
+that its child has ended. A child that must tell its parent sends it a
+message, to `turn.parent()`, in the turn it ends.
+
+Then the host stops the supervisor, and delivers it another `start`:
+
+[source]
+----
+include::{examples}/xactor_lifecycle.cpp[tag=stop,indent=0]
+----
+
+It prints:
+
+[listing]
+----
+include::{examples}/xactor_lifecycle.expected[lines=7..12]
+----
+
+`stop` visits the family in its order, the children 2, 3 and 4 and then their
+parent 1, and stops each that is still active: the doubler and the failing
+child stay as they ended, so it stops 4 and then 1, and returns them in that
+order. The `start` delivered afterwards is accepted, since the address names
+an actor, and dropped, since the actor has ended: nothing is delivered.
+
+The rules of the lifecycle:
+
+* *Only an active actor receives messages.* Once an actor has ended, its
+  pending messages are dropped, never delivered and never logged, and so is
+  every later message to it. Dropping is not an error of the sender's, which
+  cannot know the actor has ended.
+* *An actor finishes once.* `finish(output)` makes it `done` and keeps the
+  output; a second `finish` is `invalid_argument` and changes nothing.
+  `output_of` is `nullptr` unless the actor is `done`, and `error_of` is empty
+  unless it is `error`.
+* *An actor ends in one way.* An error that `handle` returns in the turn that
+  finished or stopped its actor changes nothing: the actor stays as it ended.
+* *Stopping a child stops its family.* `turn.stop_child(child)` stops `child`
+  and every actor descended from it that is still active, in the family's
+  order, and returns them in that order; their mailboxes and timers are
+  dropped. A member that had already ended stays as it ended, and its
+  descendants are stopped all the same. It is `invalid_argument` for anything
+  but a child of the caller: the caller itself, a grandchild, an address that
+  names no actor. The host's `stop(actor)` does the same for any actor.
+* *Ending alone.* `turn.stop()` ends the actor handling the message as
+  `stopped`, alone. An actor that finishes, fails or stops itself leaves its
+  children running: they are its logic's to stop, with `stop_child`, before it
+  ends.
+* *An ended actor creates nothing.* In the rest of the turn that ended it, an
+  actor spawns no child and arms no timer: `spawn_child` and `wake_at` are
+  `invalid_argument`, and `spawn_child` constructs nothing. It can still send.

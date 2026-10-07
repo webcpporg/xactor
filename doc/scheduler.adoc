@@ -1,0 +1,77 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-scheduler]
+== The scheduler
+
+`xactor::scheduler<Message>` holds the actors and hands them their messages.
+It is built with its `budgets`, whose `fuel` is the fuel of each execution, a
+million units by default. Each actor has a first-in first-out
+mailbox, and the actors with messages waiting wait in one first-in first-out
+queue, each at most once. `run_one` takes the actor at the front of the queue,
+hands it the first message of its mailbox, and puts it back at the end of the
+queue while its mailbox holds more. So no actor keeps the others waiting
+however much it sends itself, and the order of deliveries depends on nothing
+but the order in which messages were enqueued. Nothing in xactor starts a
+thread: the scheduler and its actors live on the thread that calls them, the
+host's.
+
+The quick start's host shows the calls a host makes most
+(<<xactor-quick-start>>):
+
+[cols="2,3",options="header"]
+|===
+| Call | What it does
+
+| `scheduler(budgets)`
+| A system whose executions each start with `budgets.fuel`.
+
+| `create_actor<Logic>(system, inputs)`
+| A free function: constructs a `Logic` from `inputs` and runs it as a new
+  actor of `system`, `active`, at the next address. Returns its `actor_ref`.
+
+| `spawn(logic)`
+| The same, for a logic already constructed, given as a `std::unique_ptr` to
+  an `actor_logic<Message>`; `invalid_argument` for a null one.
+
+| `deliver(to, message, correlation)`
+| Puts a message from the host in the mailbox of `to`, in the execution
+  `correlation`, and the actor in the queue; nothing runs yet.
+  `invalid_argument` for an address that names no actor.
+
+| `run_one(log)`
+| Hands exactly one message to its actor, and records it in `log` when `log`
+  is not null. Returns `false` when there was none. Drivers call it.
+
+| `idle()`
+| Whether no message is waiting.
+
+| `status_of(actor)`
+| `active`, `done`, `error` or `stopped` (<<xactor-lifecycle>>);
+  `invalid_argument` for an address that names no actor.
+
+| `output_of(actor)`
+| What the actor finished with, or `nullptr` unless it is `done`.
+
+| `error_of(actor)`
+| The error its handler returned, or an empty code unless it is `error`.
+
+| `fuel_of(correlation)`, `limits()`
+| The fuel an execution has left, and the budgets the system was built with
+  (<<xactor-fuel>>).
+
+| `clock_tick`, `release_next`, `now`, `pending_timers`, `next_deadline`
+| Time and timers (<<xactor-timers>>).
+
+| `stop(actor)`
+| Ends an actor and its family from outside (<<xactor-lifecycle>>).
+|===
+
+A failed handler does not fail `run_one`: the actor ends with the status
+`error`, and `run_one` returns `true` for the message it handed over. It
+returns a `result` all the same, so that a failure of the scheduler itself
+would have a way to the host, through the drivers, which pass it on; there is
+none today.

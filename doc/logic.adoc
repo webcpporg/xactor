@@ -1,0 +1,56 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-logic]
+== Writing an actor logic
+
+An actor logic is a class derived from `xactor::actor_logic<Message>` that
+overrides its one pure virtual function, `handle`, which takes the actor's
+turn and the envelope of the message, and returns an `xactor::result<void>`,
+as the quick start's echo and counter do (<<xactor-quick-start>>).
+
+* *Its input.* What the logic is constructed with is its input:
+  `create_actor<Logic>(system, inputs)` and a turn's
+  `spawn_child<Logic>(inputs)` pass their arguments to the constructor of
+  `Logic`. The quick start's counter takes the echo's `actor_ref` as its
+  input.
+* *Its state.* Its members are the actor's state, and only its own `handle`
+  changes them: the counter's sum and count of answers.
+* *One message at a time.* `handle` is called once for each message, and
+  returns before the next is handed over. It reads the message from
+  `cause.payload`, with `std::get_if`, `std::holds_alternative` or
+  `std::visit`.
+* *Owned by the scheduler.* A logic can be neither copied nor moved: once it
+  runs, the scheduler owns it and never moves it.
+* *Errors end it.* A `handle` that returns an error ends its actor with the
+  status `error`, and the scheduler keeps the error for `error_of`. The rest
+  of the system goes on: every other actor keeps its turns, and the driver's
+  run goes on. A handler may return any `boost::system::error_code`, of
+  xactor's category or of its own; the scheduler keeps it as it is.
+
+Every call of xactor that can fail returns an `xactor::result<T>`,
+Boost.System's `result` with an `error_code`, and changes nothing when it
+fails. A logic checks the result of each call: it returns a failure to end its
+actor with it, as the quick start's counter does with a failed send, or it
+goes on, as the relay of <<xactor-fuel>> does. `xactor::failure<T>(code)`
+builds a failed `result<T>`. xactor's own codes are `xactor::errc` values, of
+the category `webcpp.xactor`, and their `message()` is their name:
+
+[cols="1,3",options="header"]
+|===
+| Code | When
+
+| `errc::invalid_argument`
+| A null logic given to `spawn`; an address that names no actor, given to
+  `deliver`, `send`, `stop` or `status_of`; a reply to a message from the
+  host; a turn's `finish` or `stop` once its actor has ended, a second
+  `finish` among them; a `stop_child` of an actor that is not the caller's
+  child; a `wake_at` or a `spawn_child` once the actor has ended.
+
+| `errc::resource_limit`
+| A `send`, `reply`, `wake_at` or `spend` that the execution's fuel cannot pay
+  (<<xactor-fuel>>).
+|===

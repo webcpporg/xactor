@@ -6,4 +6,5 @@
 
 import webcpp ;
 
+webcpp.doc xactor : xactor.adoc ;
 webcpp.reference xactor ;

@@ -1,0 +1,65 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+= xactor: a deterministic actor system for {cpp}
+:toc: left
+:toclevels: 1
+:idprefix:
+:sectanchors:
+:example-caption!:
+:attribute-missing: warn
+
+xactor is a header-only, deterministic actor system for {cpp}20, one of the
+libraries of https://github.com/webcpporg/webcpp[webcpp]. Its actors handle
+one message at a time, on one thread, in an order that depends only on the
+order the messages were sent; every execution is paid from a budget of fuel;
+and time is a number the host brings.
+
+This page teaches xactor concept by concept: why each exists, its smallest
+example, its variations and its rules. Every program it shows was compiled
+and run, natively and, but for the program built on Boost.Asio, for
+wasm32-wasip2 and wasm32-wasip3, and printed the output shown under it. The
+<<reference,reference>> that closes it lists every name the headers declare.
+
+include::introduction.adoc[]
+
+include::quick-start.adoc[]
+
+include::model.adoc[]
+
+include::logic.adoc[]
+
+include::scheduler.adoc[]
+
+include::turns.adoc[]
+
+include::fuel.adoc[]
+
+include::timers.adoc[]
+
+include::lifecycle.adoc[]
+
+include::drivers.adoc[]
+
+include::static-actors.adoc[]
+
+include::determinism.adoc[]
+
+include::testing.adoc[]
+
+include::guarantees.adoc[]
+
+[#reference]
+== Reference
+
+Every name xactor declares, in the namespace `webcpp::xactor`, from the Doc
+Comments of its headers: each class, function, type and enumerator with its
+declaration, what it does, what it asks of its caller and how it fails. The
+other sections teach the library; this one is where a name is looked up.
+
+include::{reference}[leveloffset=+1]
+
+include::glossary.adoc[]

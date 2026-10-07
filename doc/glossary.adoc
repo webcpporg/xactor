@@ -1,0 +1,168 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[appendix]
+[#glossary]
+== Glossary
+
+The terms this page uses, in alphabetical order. Each entry says what the
+term means here, what it is in the code, and which section explains it.
+
+[glossary]
+[[glossary-actor]]Actor::
+An independent object that reaches others only by messages: it has its own
+state, which only it changes, and it handles one message at a time, from its
+mailbox. In xactor, an actor is a logic running in a scheduler, at an
+address, a number from 1 in the order the actors were created.
++
+In the code: an `xactor::actor_ref`, which `create_actor`, the scheduler's
+`spawn` and a turn's `spawn_child` return. +
+See <<xactor-model,The model>>.
+
+[[glossary-actor-logic]]Actor logic::
+What an actor does, apart from the actor that runs it: a class with one
+`handle`, called with one message at a time and the
+<<glossary-turn,turn>> it arrived in, through which it does everything it
+does. It never sees the scheduler, its mailbox or the driver. Its members are
+the actor's state, and only its own `handle` changes them.
++
+In the code: a class derived from xactor's `actor_logic<Message>`, whose
+`handle` takes the turn and the <<glossary-envelope,envelope>> and returns an
+`xactor::result<void>`. +
+See <<xactor-logic,Writing an actor logic>>.
+
+[[glossary-driver]]Driver::
+What decides when turns happen: it hands the queued messages to their
+actors, one per turn, until none is left, or until it has handed as many as
+its host allows. Every driver delivers the same messages in the same order;
+they differ in who holds the thread.
++
+In the code: `fifo_driver` for a program, `test_driver` for a test, one
+message per `step()`, and `asio_driver` for a native program built around a
+Boost.Asio `io_context`; each calls the scheduler's `run_one`. +
+See <<xactor-drivers,Drivers>>.
+
+[[glossary-envelope]]Envelope::
+A message as xactor carries it, and as an actor logic receives it: the actor
+it is for, the actor that sent it, the <<glossary-execution,execution>> it
+belongs to, its sequence number, in the order messages entered a mailbox, and
+the message itself.
++
+In the code: `xactor::envelope<Message>` (`to`, `from`, `correlation`,
+`sequence`, `payload`); `from` is the address 0 for the host. +
+See <<xactor-model,The model>>.
+
+[[glossary-envelope-log]]Envelope log::
+The record of the messages a run delivered, one entry for each, written
+before the actor handles it. It keeps which alternative of the message
+variant arrived, not the message, so two logs compare cheaply: two
+schedulers built with the same budgets and fed the same deliveries record
+equal logs, whatever driver runs them.
++
+In the code: `xactor::envelope_log`, given to `run_one` or to a driver, whose
+`entries()` are each a `logged_envelope` (`sequence`, `to`, `from`,
+`correlation`, `remaining_fuel`, `payload_index`). +
+See <<xactor-drivers-log,The envelope log>>.
+
+[[glossary-execution]]Execution::
+Everything one input from the host causes: the messages and the timers that
+follow from it, through any number of actors, paid from one reservoir of
+<<glossary-fuel,fuel>>. A delivery or a tick from the host opens one, and
+every message it causes belongs to it.
++
+In the code: an execution named by an `xactor::correlation_id`, whose fuel
+the scheduler's `fuel_of(correlation)` tells. +
+See <<xactor-fuel,Fuel>>.
+
+[[glossary-fuel]]Fuel::
+The units an execution pays its work with: one for each message its actors
+send and each timer they arm, and the units they declare for their own work.
+An execution starts with the whole budget and is never refilled, so its work
+is bounded, whatever shape its messages take; what it cannot pay is refused,
+and changes nothing.
++
+In the code: `xactor::budgets::fuel`, `turn.fuel()`, `turn.spend(units)` and
+`errc::resource_limit`. +
+See <<xactor-fuel,Fuel>>.
+
+[[glossary-guarantee]]Guarantee::
+A rule xactor keeps whatever its caller does, under a number. A guarantee
+keeps its number and its anchor, and a comment of the code or of a test
+cites it by that anchor; the build of this page fails on a citation that
+names no anchor of it.
++
+In the code: a comment of a test cites a guarantee by its anchor, the
+thirteenth as `#xactor-invariant-13`. +
+See <<xactor-guarantees,Guarantees>>.
+
+[[glossary-host]]Host::
+The program around the actors: it creates them, delivers them messages,
+brings the time, runs a driver and reads what the actors ended with. A
+message from the host has no sender: its envelope's `from` is the address 0.
++
+In the code: the caller of `create_actor` and of the scheduler's `deliver`,
+`clock_tick`, `release_next`, `stop`, `status_of` and `output_of`. +
+See <<xactor-quick-start,Quick start>>.
+
+[[glossary-mailbox]]Mailbox::
+Where an actor's messages wait, in the order they were enqueued, until the
+actor has handled the one before: one first-in first-out queue for each
+actor, from which each turn of the actor takes one message.
++
+In the code: a part of `xactor::scheduler`, which no logic sees. +
+See <<xactor-scheduler,The scheduler>>.
+
+[[glossary-scheduler]]Scheduler::
+The part of xactor that holds the actors and hands them their messages: one
+first-in first-out mailbox for each actor, and one first-in first-out queue
+of the actors that have messages waiting, each at most once. Each turn takes
+the actor at the front of the queue and hands it the first message of its
+mailbox, and the actor goes back to the end of the queue while its mailbox
+holds more. Delivering a message only puts it in a mailbox; a
+<<glossary-driver,driver>> decides when turns happen.
++
+In the code: `xactor::scheduler<Message>`, built with its `budgets`. +
+See <<xactor-scheduler,The scheduler>>.
+
+[[glossary-static-actor]]Static actor::
+An actor whose behaviour is a state machine compiled into the program: its
+states, events and transitions are {cpp} types and expressions, checked by
+the compiler and fixed when the program is built. An actor logic holds the
+machine as a member and hands each message to it, and the machine's actions
+reach the system through the turn.
++
+In the code: an actor logic over a Boost.MSM machine, whose events carry the
+message and the turn; xactor knows nothing of the library. +
+See <<xactor-static-actors,Static actors>>.
+
+[[glossary-status]]Status::
+Whether an actor still receives messages: `active`, the one status in which
+it does, or `done`, `error` or `stopped`, each final.
++
+In the code: `xactor::status`, which the scheduler's `status_of` returns;
+its values are fixed and never reused. +
+See <<xactor-lifecycle,Lifecycle>>.
+
+[[glossary-timer]]Timer::
+A message an actor arms for later, which comes back to the actor when the
+host's time reaches its deadline. xactor reads no clock: the host brings the
+time.
++
+In the code: `turn.wake_at(deadline, message)`, with a key or without,
+`turn.cancel_timer(key)`, and the scheduler's `clock_tick` and
+`release_next`. +
+See <<xactor-timers,Timers>>.
+
+[[glossary-turn]]Turn::
+One delivery: the scheduler hands an actor one message, and the turn is
+everything the actor may do to the system while it handles that message. It
+sends and replies, spawns and stops its children, finishes or stops itself,
+arms and cancels timers and spends fuel, all through the turn, which knows
+the actor and the execution the message belongs to. A turn lives for one
+`handle`.
++
+In the code: `xactor::turn<Message>`, handed to `handle` with the envelope. +
+See <<xactor-turns,Turns>>.

@@ -1,0 +1,74 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-model]
+== The model
+
+A program writes two things, its messages and the logic of its actors, and
+xactor provides the rest:
+
+Messages::
+One closed `std::variant` of plain structs, the program's own. Closed means
+every message is known when the program is compiled: `std::visit` over it
+checks that every alternative is handled, and the scheduler's log records
+which alternative arrived by its `index()`. Every type of xactor that carries
+a message is a template over this variant, and xactor asks nothing more of it
+than to be a `std::variant` that can be moved. A program may name the types it
+uses once, for instance `+using turn = xactor::turn<message>;+`.
+Actor logic::
+What an actor does: a class with one `handle`, called with one message at a
+time (<<xactor-logic>>). It never sees the scheduler, its mailbox or the
+driver: all it does, it does through its turn, the object it is handed with
+each message (<<xactor-turns>>).
+Actor::
+A logic running in a scheduler, created by `create_actor` or by a turn's
+`spawn_child`, and named by the `actor_ref` they return. An `actor_ref` holds
+the actor's address, a number from 1 in the order the actors were created; 0
+names no actor.
+Scheduler::
+The system that holds the actors: one first-in first-out mailbox for each
+actor, and one first-in first-out queue of the actors that have messages
+waiting (<<xactor-scheduler>>). Delivering a message only puts it in a
+mailbox.
+Driver::
+What decides when turns happen: it hands queued messages to their actors
+until none is left, or until it has handed a given number
+(<<xactor-drivers>>).
+Execution::
+Everything that one delivery from the host causes, named by a
+`correlation_id`. Its fuel pays for all of it (<<xactor-fuel>>).
+
+A message travels in an envelope, `xactor::envelope<message>`, which is what a
+logic's `handle` receives:
+
+[cols="1,3",options="header"]
+|===
+| Field | What it holds
+
+| `to`
+| The actor it is for.
+
+| `from`
+| The actor that sent it; the address 0 when the host did, and the actor
+  itself for the message of one of its timers.
+
+| `correlation`
+| The execution it belongs to.
+
+| `sequence`
+| Its number in the order messages entered a mailbox: the scheduler numbers
+  each one as it enqueues it.
+
+| `payload`
+| The message.
+|===
+
+A run goes the same way every time. The host creates the actors and delivers
+a message, which waits in a mailbox. A driver then calls the scheduler's
+`run_one`, which takes the actor at the front of the queue and hands it the
+first message of its mailbox: the actor's `handle` runs with that message and
+its turn, and whatever the actor sends waits in another mailbox. When nothing
+is left, the host reads what the actors ended with.

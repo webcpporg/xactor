@@ -1,0 +1,221 @@
+// Copyright (c) 2026 WebCpp.org
+//
+// Distributed under the Boost Software License, Version 1.0. (See
+// accompanying file LICENSE_1_0.txt or copy at
+// https://www.boost.org/LICENSE_1_0.txt)
+
+[#xactor-testing]
+== Testing
+
+A test of actors checks that, from a known start and given some messages,
+they reach the statuses and the outputs they should, and send what they
+should. A test is worth its checks only when the run it checks is the same
+every time, and in xactor nothing in a run depends on the world outside the
+test:
+
+* *There is no real clock.* A timer waits on the host's time, and only the
+  test moves it, by any amount at once (<<xactor-timers>>).
+* *There is no thread.* The test's driver hands over each message, and
+  returns when it has (<<xactor-drivers>>).
+* *There is no exception.* A call that fails returns its error, and an actor
+  whose `handle` fails ends with the status `error`, where the test reads the
+  code (<<xactor-logic>>).
+* *Work is counted.* A test that gives an execution little fuel sees what its
+  actors are refused when it runs out (<<xactor-fuel>>).
+
+This chapter shows how a program tests its actors, and then how xactor
+itself is tested, on every target it supports.
+
+[#xactor-testing-actors]
+=== Testing a program's actors
+
+The test below checks an echo and the client that asks it, with
+https://www.boost.org/doc/libs/release/libs/core/doc/html/core/lightweight_test.html[Boost.Core's lightweight_test],
+the framework of one header that xactor's own tests use. It begins with
+xactor's header and the framework's:
+
+[source]
+----
+include::{examples}/xactor_testing.cpp[tag=includes,indent=0]
+----
+
+The echo replies to every ask with the same number, and the client asks it
+for the number its `start` names, and keeps each answer in a vector the test
+owns, which it is constructed with, so that the test reads what the client
+received:
+
+[source]
+----
+include::{examples}/xactor_testing.cpp[tag=logics,indent=0]
+----
+
+The first test case drives the actors with a `test_driver`, one message a
+step. After each step it checks what that message changed: the fuel of the
+execution, which each message an actor sends takes a unit of, and the
+answers the client kept. `BOOST_TEST` returns whether its check held, so the
+case stops where a check it cannot go on without fails:
+
+[source]
+----
+include::{examples}/xactor_testing.cpp[tag=steps,indent=0]
+----
+
+The second runs the same deliveries twice, records each run in an envelope
+log, and checks that the two logs are equal, as every pair of runs of the
+same deliveries must be (<<xactor-drivers-log>>):
+
+[source]
+----
+include::{examples}/xactor_testing.cpp[tag=logs,indent=0]
+----
+
+`main` calls the cases and returns `boost::report_errors()`, the program's
+status:
+
+[source]
+----
+include::{examples}/xactor_testing.cpp[tag=main,indent=0]
+----
+
+When every check holds, the program prints `No errors detected.` on its
+standard error, nothing on its standard output, and returns 0. A check that
+fails prints its expression, its values, its file and its line on the
+standard error, and `main` returns 1. Built without exceptions, the program
+links a definition of `boost::throw_exception`, as any program does
+(<<xactor-quick-start-build>>).
+
+[#xactor-testing-library]
+=== How xactor is tested
+
+xactor's tests are lightweight_test programs, one per subject, under
+`test/`, each declared in `test/Jamfile` with webcpp's `webcpp.run`:
+
+[cols="1,3",options="header"]
+|===
+| Test | What it checks
+
+| `scheduler`
+| Delivery in first-in first-out order, within an actor and across actors;
+  the test driver's one message a step; the FIFO and the Asio drivers
+  recording one envelope log; and timers: by deadline and then in the order
+  armed, replaced and cancelled by key, refused, and dropped with their
+  actor.
+
+| `lifecycle`
+| An actor's statuses and how it ends: finishing, a failed `handle`, a stop.
+  A family built with `spawn_child`, stopped descendants first by its parent
+  or by the host, and a turn of an ended actor that spawns nothing.
+
+| `fuel`
+| Executions and fuel: a chain of messages that stops when its fuel runs
+  out, a fan-out of messages that share it, an actor that pays for its own
+  work and sees what is left, an execution of its own for each correlation,
+  and a delivery from the host that costs nothing.
+
+| `create_actor`
+| `create_actor`, which constructs a new active actor that receives
+  messages.
+|===
+
+Each test case is a function, and `main` calls them all and returns
+`boost::report_errors()`. A case that cannot go on after a failed check
+returns, `if (!BOOST_TEST(...)) { return; }`; a helper, which cannot return
+from its case, calls `webcpp::test::require`, of `test/require.hpp`, which
+ends the program with the errors counted so far. A comment above a case
+names the guarantee it checks by its anchor (<<xactor-guarantees>>).
+
+Beside them, `test/Jamfile` compiles each public header alone, as the only
+include of its translation unit, so that a header that leans on an include it
+does not make fails, naming it; and `example/Jamfile` builds every program
+this page shows, runs it, and compares what it printed on its standard
+output with the `<name>.expected` beside it. A program that returns anything
+but 0 fails too, even when it printed the expected lines.
+
+[#xactor-testing-targets]
+=== Targets
+
+`test/Jamfile` and `example/Jamfile` declare the targets they are built for,
+`webcpp.targets native wasip2 wasip3`, and b2 builds each program for those
+alone:
+
+[cols="1,3",options="header"]
+|===
+| Target | How it is built and run
+
+| native
+| Any toolset not listed below. Each test is built and run twice: as the
+  build makes it, with exceptions and RTTI, and as `<name>-noexcept`, without
+  exceptions and without RTTI, with `BOOST_NO_EXCEPTIONS` and webcpp's
+  `tools/throw_exception.cpp`. So every test proves xactor in both of the
+  builds a program may make of it.
+
+| wasip2
+| The toolset `clang-wasip2`, the Clang of wasi-sdk for wasm32-wasip2, run by
+  wasmtime. Without exceptions, which some WebAssembly hosts lack: with
+  `BOOST_NO_EXCEPTIONS` and `tools/throw_exception.cpp`.
+
+| wasip3
+| The toolset `clang-wasip3`, for wasm32-wasip3, run by wasmtime. With
+  exceptions, as WebAssembly's exception handling.
+|===
+
+Boost.Asio does not compile for either WASI target, so the Asio driver, its
+checks in `scheduler` and the example `xactor_asio` are built natively only
+(<<xactor-drivers-asio>>). Every other program of `test/` and `example/`
+includes `<webcpp/xactor.hpp>`, and with it `drivers.hpp`, so its WASI build
+is the check that nothing of Boost.Asio enters a WASI build.
+
+From the root of a webcpp checkout, these build and run the tests and the
+examples natively, then for each WASI target:
+
+[source,bash]
+----
+b2 libs/xactor/test libs/xactor/example
+b2 libs/xactor/test libs/xactor/example toolset=clang-wasip2 testing.launcher=wasmtime
+b2 libs/xactor/test libs/xactor/example toolset=clang-wasip3 testing.launcher=wasmtime
+----
+
+The WASI toolsets are b2's `clang`, which a `user-config.jam` registers
+against wasi-sdk 34:
+
+[listing]
+----
+local wasi-sdk = /path/to/wasi-sdk ;
+
+using clang : wasip2 : $(wasi-sdk)/bin/clang++
+  : <cflags>--target=wasm32-wasip2 <cxxflags>--target=wasm32-wasip2
+    <linkflags>--target=wasm32-wasip2
+    <archiver>$(wasi-sdk)/bin/llvm-ar <ranlib>$(wasi-sdk)/bin/llvm-ranlib ;
+
+using clang : wasip3 : $(wasi-sdk)/bin/clang++
+  : <cflags>--target=wasm32-wasip3 <cxxflags>--target=wasm32-wasip3
+    <linkflags>--target=wasm32-wasip3
+    <archiver>$(wasi-sdk)/bin/llvm-ar <ranlib>$(wasi-sdk)/bin/llvm-ranlib ;
+----
+
+b2 compares timestamps, so a result that counts is built from scratch, with
+`b2 -a`. `b2 libs/xactor/test//scheduler`, or `scheduler-noexcept`, builds
+and runs one test alone, while working on it.
+
+[#xactor-testing-report]
+=== The test matrix
+
+The continuous integration runs xactor's tests and examples in lanes, one
+toolset each: the native compilers, and wasip2 and wasip3, the lanes that
+xactor's Jamfiles declare. Each lane builds from scratch and records what b2
+built and ran:
+
+[source,bash]
+----
+b2 -a --dump-tests --out-xml=<lane>.xml toolset=<toolset> libs/xactor/test libs/xactor/example
+----
+
+webcpp's `tools/report/report.py` merges the files of every lane into a
+matrix in the manner of Boost's regression tests: a page of the libraries by
+lanes, and a page of each library's tests and examples by lanes. Each cell
+says whether that program passed in that lane, or how it failed: at compile
+time, at link time or when it ran. The output b2 captured of a failure is one
+click away. A lane in which nothing was built, or that was built for another
+target than its name says, fails by name rather than show green. The matrix
+is published with the documentation, at
+https://webcpporg.github.io/webcpp/report/.
