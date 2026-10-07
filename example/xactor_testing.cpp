@@ -101,14 +101,15 @@ void the_client_keeps_what_the_echo_answers() {
     BOOST_TEST(answers.empty());
     BOOST_TEST(stepped(driver));  // The client handles the answer, and keeps it.
     BOOST_TEST(answers == std::vector<int>{7});
-    BOOST_TEST(!stepped(driver));
+    const xactor::result<bool> last = driver.step();  // Nothing is left, and nothing failed.
+    BOOST_TEST(last.has_value() && !*last);
     BOOST_TEST(system.idle());
 }
 
 // end::steps[]
 
 // tag::logs[]
-/** Runs the client and the echo on one start for each of numbers, and returns their log. */
+/** Runs the client and the echo on one start for each of `numbers`, and returns their log. */
 xactor::envelope_log run(const std::vector<int>& numbers) {
     std::vector<int> answers;
     xactor::envelope_log log;

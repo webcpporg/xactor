@@ -8,16 +8,15 @@
 == The scheduler
 
 `xactor::scheduler<Message>` holds the actors and hands them their messages.
-It is built with its `budgets`, whose `fuel` is the fuel of each execution, a
-million units by default. Each actor has a first-in first-out
-mailbox, and the actors with messages waiting wait in one first-in first-out
-queue, each at most once. `run_one` takes the actor at the front of the queue,
-hands it the first message of its mailbox, and puts it back at the end of the
-queue while its mailbox holds more. So no actor keeps the others waiting
-however much it sends itself, and the order of deliveries depends on nothing
-but the order in which messages were enqueued. Nothing in xactor starts a
-thread: the scheduler and its actors live on the thread that calls them, the
-host's.
+It is built with its `budgets`, whose `fuel` is the fuel of each execution,
+a million units by default. Each actor has a first-in first-out mailbox, and
+the actors with messages waiting wait in one first-in first-out queue, each
+at most once. `run_one` takes the actor at the front of the queue, hands it
+the first message of its mailbox, and puts it back at the end of the queue
+while its mailbox holds more. So no actor keeps the others waiting however
+much it sends itself, and the order of deliveries depends on nothing but the
+order in which messages were enqueued. Nothing in xactor starts a thread:
+the scheduler and its actors live on the thread that calls them, the host's.
 
 The quick start's host shows the calls a host makes most
 (<<xactor-quick-start>>):

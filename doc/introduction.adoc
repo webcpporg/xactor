@@ -41,8 +41,8 @@ https://github.com/webcpporg/xstate[xstate] builds its actor layer on it.
   and the error codes, and, outside a WASI build, Boost.Asio, for its Asio
   driver. It is header-only, and nothing of Boost is compiled for it.
 * *Without exceptions, a definition of `boost::throw_exception`.* xactor
-  throws nothing, and it is built and tested with exceptions and RTTI turned
-  off as well as on. Boost.System's `result` still names
+  throws no exception of its own, and it is built and tested with exceptions
+  and RTTI turned off as well as on. Boost.System's `result` still names
   `boost::throw_exception` then, and the program defines it
   (<<xactor-quick-start>>). A program built with exceptions needs nothing
   here, since Boost defines the function then.
@@ -63,16 +63,15 @@ every example declares.
 the actors, the scheduler that hosts them. <<xactor-logic>> and
 <<xactor-scheduler>> take the parts a program writes and calls most, and
 <<xactor-turns>> lists what an actor can do while it handles a message. The
-sections after it take what bounds and moves a run:
-<<xactor-fuel,fuel>>, <<xactor-timers,timers>>, the
-<<xactor-lifecycle,lifecycle>> of an actor and its children, and the
-<<xactor-drivers,drivers>> that decide when turns happen.
-<<xactor-static-actors>> gives an actor a compile-time state machine for its
-behaviour, and <<xactor-determinism>> says what an actor must not do, so
-that its runs stay the same. <<xactor-testing>> shows how a program tests its actors, and
-how xactor itself is tested. <<xactor-guarantees>> lists what xactor
-promises whatever its caller does, each promise under a number that the
-code and the tests cite. The <<reference,reference>> and the
+sections after it take what bounds and moves a run: <<xactor-fuel,fuel>>,
+<<xactor-timers,timers>>, the <<xactor-lifecycle,lifecycle>> of an actor and
+its children, and the <<xactor-drivers,drivers>> that decide when turns
+happen. <<xactor-static-actors>> gives an actor a compile-time state machine
+for its behaviour, and <<xactor-determinism>> says what an actor must not
+do, so that its runs stay the same. <<xactor-testing>> shows how a program
+tests its actors, and how xactor itself is tested. <<xactor-guarantees>>
+lists what xactor promises whatever its caller does, each promise under a
+number that the code and the tests cite. The <<reference,reference>> and the
 <<glossary,glossary>> close the page.
 
 xactor leaves to the program, or to a library built on it, what an actor

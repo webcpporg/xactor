@@ -17,9 +17,9 @@ test:
   test moves it, by any amount at once (<<xactor-timers>>).
 * *There is no thread.* The test's driver hands over each message, and
   returns when it has (<<xactor-drivers>>).
-* *There is no exception.* A call that fails returns its error, and an actor
-  whose `handle` fails ends with the status `error`, where the test reads the
-  code (<<xactor-logic>>).
+* *A failure is a value.* A call of xactor that fails returns its error,
+  and an actor whose `handle` fails ends with the status `error`, where the
+  test reads the code (<<xactor-logic>>).
 * *Work is counted.* A test that gives an execution little fuel sees what its
   actors are refused when it runs out (<<xactor-fuel>>).
 
@@ -121,8 +121,9 @@ Each test case is a function, and `main` calls them all and returns
 `boost::report_errors()`. A case that cannot go on after a failed check
 returns, `if (!BOOST_TEST(...)) { return; }`; a helper, which cannot return
 from its case, calls `webcpp::test::require`, of `test/require.hpp`, which
-ends the program with the errors counted so far. A comment above a case
-names the guarantee it checks by its anchor (<<xactor-guarantees>>).
+ends the program with the errors counted so far. Each case is named after
+the rule it checks, as `a_host_delivery_costs_no_fuel`, and the comment above
+some of them cites a guarantee by its anchor (<<xactor-guarantees>>).
 
 Beside them, `test/Jamfile` compiles each public header alone, as the only
 include of its translation unit, so that a header that leans on an include it

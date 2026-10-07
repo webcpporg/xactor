@@ -72,9 +72,12 @@ the same deliveries produce identical envelope logs.
 . [[xactor-invariant-18]]xactor reads no clock, no disk and no network.
 . [[xactor-invariant-19]]No turn blocks: nothing calls `io_context::run`,
 `run_one` or `run_for`.
-. [[xactor-invariant-20]]xactor throws no exception and needs no RTTI:
-every operation that can fail returns a `result`, and the library compiles
-and runs with exceptions and RTTI turned off.
+. [[xactor-invariant-20]]xactor throws no exception of its own and needs
+no RTTI: every operation that can fail returns a `result`, and the library
+compiles and runs with exceptions and RTTI turned off. Where exceptions are
+on, an operation that allocates, such as `spawn`, `deliver`, `send`,
+`wake_at` or the log's `record`, can still throw `std::bad_alloc`, as a
+standard container does.
 . [[xactor-invariant-21]]There is no static mutable state: two schedulers
 in one process are independent.
 . [[xactor-invariant-22]]`test_driver` exposes `step`, exactly one
@@ -110,12 +113,13 @@ that turn as its parent, and the parent records its children in spawn
 order; `turn::parent` returns the parent, and nothing for an actor the host
 spawned. `turn::self` is the actor handling the message.
 . [[xactor-invariant-31]]`turn::stop_child(child)` stops `child` and every
-actor descended from it that is still active, each after all of its own
-descendants and siblings in spawn order, and returns them in that order; their mailboxes and timers are dropped, and
-a member that had already ended stays as it ended while its descendants are
-still stopped. It is `invalid_argument` for anything but a child of the
-caller (the caller itself, a grandchild, an address that names no actor),
-which changes nothing. The caller is never in the family.
+actor descended from it that is still active, each after its own
+descendants, siblings in spawn order, and returns them in that order; their
+mailboxes and timers are dropped, and a member that had already ended stays
+as it ended while its descendants are still stopped. It is
+`invalid_argument` for anything but a child of the caller (the caller
+itself, a grandchild, an address that names no actor), which changes
+nothing. The caller is never in the family.
 . [[xactor-invariant-32]]`wake_at(deadline, message, key)` replaces the same
 actor's timer under `key`; `cancel_timer(key)` removes it; keys belong to
 their actor.
