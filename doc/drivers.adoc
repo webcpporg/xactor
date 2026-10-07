@@ -10,9 +10,9 @@
 The scheduler decides what a turn is, and a driver decides when turns happen:
 it calls the scheduler's `run_one` until no message is left, or until it has
 delivered as many as its host allows. So the same actors run under a plain
-loop in a program, one message at a time in a test, or on a Boost.Asio
-`io_context` beside other work, and every driver delivers the same messages in
-the same order. xactor's drivers are these:
+loop in a program, one message at a time in a test, or as handlers on a
+Boost.Asio strand, and every driver delivers the same messages in the same
+order. xactor's drivers are these:
 
 [cols="1,1,3",options="header"]
 |===
@@ -30,7 +30,7 @@ the same order. xactor's drivers are these:
   there was one. It has nothing else.
 
 | `asio_driver`
-| A native program built around an `io_context`
+| A native program that runs its turns as Asio handlers
 | `run_until_idle(log)`, the same turns posted onto one strand of an
   `io_context` the driver owns. A WASI build leaves it out.
 |===
@@ -135,13 +135,14 @@ deliveries record equal logs, whatever driver runs them.
 [#xactor-drivers-asio]
 === The Asio driver
 
-`asio_driver` delivers the same turns on Boost.Asio, for a native program
-built around it: the turns run as handlers on a strand of an `io_context` the
-driver owns, so the program's own threads and I/O objects live around the
-scheduler without entering a turn. The driver posts each `run_one` onto the
-strand and drains the context with `poll`, which runs what is ready and
-returns. It never calls the context's `run`, `run_one` or `run_for`, which
-would wait for more work, so a turn never blocks.
+`asio_driver` delivers the same turns on Boost.Asio, natively: the turns run
+as handlers on a strand of an `io_context` the driver owns, on the thread that
+calls `run_until_idle`. The context is the driver's alone: it offers no
+executor, so the program's own I/O objects run on a context of their own,
+never on the driver's. The driver posts each `run_one` onto the strand and
+drains the context with `poll`, which runs what is ready and returns. It never
+calls the context's `run`, `run_one` or `run_for`, which would wait for more
+work, so a turn never blocks.
 
 This program runs the rally of the example above with a `fifo_driver`, and
 again with an `asio_driver`; it repeats the players and `set_up` of that

@@ -41,8 +41,8 @@ its host allows. Every driver delivers the same messages in the same order;
 they differ in who holds the thread.
 +
 In the code: `fifo_driver` for a program, `test_driver` for a test, one
-message per `step()`, and `asio_driver` for a native program built around a
-Boost.Asio `io_context`; each calls the scheduler's `run_one`. +
+message per `step()`, and `asio_driver` for a native program that runs its
+turns as Boost.Asio handlers; each calls the scheduler's `run_one`. +
 See <<xactor-drivers,Drivers>>.
 
 [[glossary-envelope]]Envelope::
