@@ -155,9 +155,11 @@ private:
 #ifndef __wasi__
 
 /**
- The same turns, posted onto one strand of an `io_context` the driver owns, so
- threads and I/O objects can live around the scheduler without entering a
- turn.
+ The same turns, each posted as a handler onto one strand of an `io_context`
+ the driver owns, and run on the calling thread by draining it with `poll`.
+
+ The context is the driver's alone: it offers no executor, so the program's
+ own I/O objects run on a context of their own, never on the driver's.
 
  It is native only: a WASI build does not declare it. For the same
  deliveries, its envelope log equals the log of a @ref fifo_driver.
