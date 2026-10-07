@@ -37,7 +37,7 @@ exceptions and without RTTI:
 | `BOOST_TEST(a == b, boost::test_tools::per_element())` | `BOOST_TEST_ALL_EQ(a.begin(), a.end(), b.begin(), b.end())` | Both compare the sizes and each element, and count as one assertion. In three places of `lifecycle_test.cpp`, the vector `names_of` returns is first bound to a local, whose iterators are passed. |
 | `BOOST_TEST_REQUIRE(x)` in a test case | `if (!BOOST_TEST(x)) { return; }`, or `BOOST_TEST_EQ`/`_NE` by the rows above | In Boost 1.92, `BOOST_TEST` expands to `::boost::detail::test_impl(...)`, which returns `bool`, and so does `test_with_impl` for `BOOST_TEST_EQ`. The case ends, as Boost.Test ended it. |
 | `BOOST_TEST_REQUIRE(x)` in a helper | `require(BOOST_TEST(x))`, from `test/require.hpp` | A helper cannot return from its caller's case, and a program built without exceptions cannot throw out of it. So `require` ends the program with `std::exit(boost::report_errors())`, after `BOOST_TEST` has reported the failure. This differs on the failure path only: the cases after it do not run, where Boost.Test ran them. The verdict is the same. |
-| `BOOST_TEST(expr, name)` and `BOOST_TEST_REQUIRE(expr, target)`, a message naming a loop's item | `BOOST_TEST(expr)`, and `if (!BOOST_TEST(expr)) { return; }` | lightweight_test takes no message. A failure names its file, line and function, but not the item. There are four sites, all in `lifecycle_test.cpp`, at old lines 494, 510, 515 and 578. |
+| `BOOST_TEST(expr, name)` and `BOOST_TEST_REQUIRE(expr, target)`, a message naming a loop's item | `if (!BOOST_TEST(expr)) { BOOST_LIGHTWEIGHT_TEST_OSTREAM << "  for " << name << '\n'; }`, and the same before the `return;` of the required one | lightweight_test takes no message, so the item is printed on the line after the failure, which names its file, line and function. The check itself is unchanged, and stays not required where it was not. There are four sites, all in `lifecycle_test.cpp`, at old lines 494, 510, 515 and 578. |
 | `BOOST_CHECK_THROW`, `STATELY_TEST_NO_EXCEPTIONS` | (none) | None of the four files uses either. So there is no `BOOST_TEST_THROWS`, and no `#ifndef BOOST_NO_EXCEPTIONS`. |
 | Fixtures and data cases | (none) | None of the four files has a `BOOST_FIXTURE_TEST_CASE`, a `BOOST_DATA_TEST_CASE`, a suite or a global fixture. Five cases loop over their data in the case's body, and these loops are kept as they were: `finishing_and_failing_drop_the_actor_s_timers`, `stop_child_refuses_itself_a_grandchild_and_no_actor`, `an_ended_actor_neither_stops_nor_finishes_again`, `an_error_after_the_actor_ended_changes_nothing` and `each_call_of_a_turn_costs_what_it_says`. The helpers that make a case's actors and run them are plain functions in both versions, listed in the tables below. |
 
@@ -67,7 +67,14 @@ counterpart, as the end of this section describes.
   - New: `BOOST_TEST`, `BOOST_TEST_*` and `BOOST_ERROR`.
 
   Each file's total was cross-checked with a plain `grep -oE` of the same macros over the
-  whole file: 126, 127, 37 and 5, old and new.
+  whole file: 126, 127, 37 and 5, old and new. These totals can be derived again at any time,
+  from the old files at `cc11cec` and the new ones here, with the two commands below. The split
+  by case was made by reading the function bodies, with a scratch script that is not kept; it
+  can be checked against the tables by hand.
+
+      grep -oE '\bBOOST_(TEST|TEST_REQUIRE|CHECK[A-Z_]*|REQUIRE[A-Z_]*|WARN[A-Z_]*)[[:space:]]*\(' <old file> | wc -l
+      grep -oE '\bBOOST_(TEST(_[A-Z_]+)?|ERROR)[[:space:]]*\(' <new file> | wc -l
+
 - **At run time**, the assertions each case executes, including those of the helpers it calls.
   - Old: Boost.Test's own count, from `--report_level=detailed`. Each old file was built in a
     scratch directory with Apple clang 21, Boost 1.92 and the header-only Boost.Test of
@@ -79,6 +86,9 @@ counterpart, as the end of this section describes.
     one per case. The call sites, in address order, are `main`'s calls, in source order.
   - The default build and a `-fno-exceptions -fno-rtti -DBOOST_NO_EXCEPTIONS` build gave the
     same counts.
+  - The runtime counts, 636 old and new, are a record made once, at `d90fb5b`, the commit that
+    added this file. The counting header was a scratch tool and is not kept: the old counts can
+    be made again with Boost.Test's report, and the new ones only with a tool like it.
 
 Both counts are of the native build. On WASI, `scheduler` has one case fewer (see below): 20
 cases, 124 assertions in the source, and 235 at run time, derived from the source.
@@ -214,7 +224,17 @@ No count differs, in any case or helper. These are the other differences:
   `deliver_lines` of `run_turn_delivers_at_most_its_budget`) now ends the program. Before, it
   ended only its case. No such check fails while the library is correct, and none failed on the
   planted defects below.
-- **The four messages that named a loop's item** are gone (see the conversion table).
+- **An exception that escapes a case**, in the builds with exceptions, ends the program. The
+  tests reach about 34 calls of `value()`, on a `result` or an `optional`, and 2 of
+  `std::map::at`, any of which throws when what the test expects is not there. Boost.Test's
+  execution monitor caught such an exception, reported it with the case's name and ran the
+  remaining cases. Now it leaves `main`, and `std::terminate` ends the program: the runtime may
+  print the exception's type and message, but no case, file or line. The verdict is the same,
+  since the exit status is not zero. Built without exceptions, the throw was and is
+  `boost::throw_exception`'s abort in both suites. None of these throws happens while the
+  library is correct, and none happened on the planted defects below.
+- **The four messages that named a loop's item** are printed on the line after the failure,
+  where Boost.Test printed them in the failure's line (see the conversion table).
 
 ## Planted defects
 
@@ -224,7 +244,7 @@ headers, and the old suite was run against it.
 
 | Defect | Planted in `scheduler.hpp` | New tests that fail | Old tests that fail | After the revert |
 | --- | --- | --- | --- | --- |
-| (a) the move-only guarantee (doc: #xactor-invariant-28) | `Message payload;` of `timer` becomes `Message payload{};` | Under clang-18 with libstdc++ (the container lane), `scheduler` and `scheduler-noexcept` do not compile: "no matching constructor for initialization of `std::variant<ticket>`" at `scheduler.hpp:206`, instantiated through `std::erase_if` from `scheduler_test.cpp:800`, `ticket_counter`'s `turn.finish(ticket{0})` in `a_message_need_only_be_a_variant_that_can_be_moved` | The same error, from the old `scheduler_test.cpp:733`, the same line of the same case | clang-18: every test passes |
+| (a) the move-only guarantee (doc: #xactor-invariant-28) | `Message payload;` of `timer` becomes `Message payload{};` | Under clang-18 with libstdc++ (the container lane), `scheduler` and `scheduler-noexcept` do not compile: "no matching constructor for initialization of `std::variant<ticket>`" at `scheduler.hpp:206`, instantiated through `std::erase_if` from `ticket_counter`'s `turn.finish(ticket{0})` in `a_message_need_only_be_a_variant_that_can_be_moved` (`scheduler_test.cpp:800` at `d90fb5b`) | The same error, from the same statement of the same case (the old `scheduler_test.cpp:733` at `cc11cec`) | clang-18: every test passes |
 | (b) fuel accounting | `take` refuses when `remaining <= units` instead of `remaining < units` | `fuel`, `scheduler` and their `-noexcept` variants: 8 cases, with 15 failed assertions | The same 8 cases, with the same 15 failed assertions, case by case | every test passes |
 | (c) a lifecycle status | `finish` retires its actor as `status::stopped` instead of `status::done` | `lifecycle`, `scheduler` and their `-noexcept` variants: 7 cases, with 7 failed assertions | The same 7 cases, with the same 7 failed assertions | every test passes |
 

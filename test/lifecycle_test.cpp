@@ -538,7 +538,9 @@ void stop_child_stops_a_family_descendants_first() {
     const std::vector<std::string> stopped = names_of(record, *record.stopped);
     BOOST_TEST_ALL_EQ(stopped.begin(), stopped.end(), expected.begin(), expected.end());
     for (const std::string& name : expected) {
-        BOOST_TEST(status_named(system, record, name) == xactor::status::stopped);
+        if (!BOOST_TEST(status_named(system, record, name) == xactor::status::stopped)) {
+            BOOST_LIGHTWEIGHT_TEST_OSTREAM << "  for " << name << '\n';
+        }
     }
     BOOST_TEST(status_named(system, record, "R") == xactor::status::active);
     BOOST_TEST_EQ(system.pending_timers(), 1U);
@@ -557,13 +559,16 @@ void stop_child_refuses_itself_a_grandchild_and_no_actor() {
         }
         run_all(system, nullptr);
         if (!BOOST_TEST(!record.stopped.has_value())) {
+            BOOST_LIGHTWEIGHT_TEST_OSTREAM << "  for " << target << '\n';
             return;
         }
         BOOST_TEST_EQ(record.stopped.error(),
                       xactor::make_error_code(xactor::errc::invalid_argument));
         BOOST_TEST_EQ(system.pending_timers(), 5U);
         for (const auto& [name, ref] : record.refs) {
-            BOOST_TEST(*system.status_of(ref) == xactor::status::active);
+            if (!BOOST_TEST(*system.status_of(ref) == xactor::status::active)) {
+                BOOST_LIGHTWEIGHT_TEST_OSTREAM << "  for " << name << '\n';
+            }
         }
     }
 }
@@ -642,7 +647,9 @@ void an_actor_that_stops_itself_ends_alone() {
     BOOST_TEST(record.stopped_self.has_value());
     BOOST_TEST(status_named(system, record, "C") == xactor::status::stopped);
     for (const std::string name : {"R", "G1", "G2", "GG2"}) {
-        BOOST_TEST(status_named(system, record, name) == xactor::status::active);
+        if (!BOOST_TEST(status_named(system, record, name) == xactor::status::active)) {
+            BOOST_LIGHTWEIGHT_TEST_OSTREAM << "  for " << name << '\n';
+        }
     }
     BOOST_TEST_EQ(system.pending_timers(), 4U);
 }
