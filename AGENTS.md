@@ -27,6 +27,13 @@ holds only what is specific to xactor.
   `run`, `run_one` and `run_for`.
 - **Targets.** `test/Jamfile` and `example/Jamfile` declare native, wasip2
   and wasip3.
+- **Tests.** Each `test/*_test.cpp` is a lightweight_test program that
+  `test/Jamfile` declares with `webcpp.run`. A case that cannot go on after a
+  failed check returns (`if (!BOOST_TEST(...)) { return; }`); a helper, which
+  cannot return from its case, calls `require` (`test/require.hpp`). What
+  uses `asio_driver` is inside `#ifndef __wasi__`, the condition under which
+  `drivers.hpp` declares it. `test/CONVERSION.md` records the conversion from
+  Boost.Test, case by case.
 - **The page.** The `// tag::<name>[]` and `// end::<name>[]` lines of the
   examples mark what xactor's page includes, and the `(doc: #<anchor>)`
   references of the headers name its sections; keep both in step with
