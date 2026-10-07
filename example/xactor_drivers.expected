@@ -1,0 +1,9 @@
+test_driver: 5 steps
+  #1 to 1 from 0, fuel 100
+  #2 to 2 from 1, fuel 99
+  #3 to 1 from 2, fuel 98
+  #4 to 2 from 1, fuel 97
+  #5 to 1 from 2, fuel 96
+fifo_driver: run_turn(2) delivered 2, idle false
+fifo_driver: run_until_idle delivered 3, idle true
+the two logs are equal: true

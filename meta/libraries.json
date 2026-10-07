@@ -1,0 +1,10 @@
+{
+    "key": "xactor",
+    "name": "xactor",
+    "authors": ["Rodrigo"],
+    "description": "A header-only, deterministic actor system: actors that handle one message at a time, with fuel per execution, timers and a lifecycle.",
+    "category": ["Concurrent"],
+    "maintainers": ["Rodrigo <pinhopro@proton.me>"],
+    "cxxstd": "20",
+    "port-of": null
+}
