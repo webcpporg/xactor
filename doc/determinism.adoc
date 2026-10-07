@@ -13,8 +13,9 @@ depend on the order of the messages alone, under every driver; fuel bounds
 every execution; and time moves only when the host brings it. xactor itself
 reads no clock, no disk and no network, blocks in no turn, keeps no static
 mutable state, so that two schedulers in one process are independent, and
-throws nothing. Two schedulers built with the same budgets and fed the same
-deliveries record equal envelope logs (<<xactor-drivers-log>>).
+throws no exception of its own. Two schedulers built with the same budgets
+and fed the same deliveries record equal envelope logs
+(<<xactor-drivers-log>>).
 
 An actor can still break that guarantee, by letting something other than its
 messages decide what it does. These rules keep it from doing so:

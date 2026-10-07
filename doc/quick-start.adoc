@@ -67,7 +67,8 @@ Seven messages were delivered: the host's `start`, three asks and three
 answers. Each ask the counter sent and each answer the echo replied cost one
 unit of fuel, and the host's `start` cost nothing, so execution 1 has 94 of its
 100 units left. Every call that can fail returns a `result`, and the program
-checks each one: xactor reports a failure as a value and throws nothing.
+checks each one: xactor reports a failure as a value, and throws no exception
+of its own (<<xactor-invariant-20,guarantee 20>>).
 
 [#xactor-quick-start-build]
 === Building it

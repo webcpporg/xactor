@@ -36,7 +36,9 @@ the same order. xactor's drivers are these:
 |===
 
 A driver is built over one scheduler, which it holds by reference. The
-`log`, an `xactor::envelope_log*`, is optional: `nullptr` records nothing.
+`log` of `run_until_idle` and `run_turn` is an `xactor::envelope_log*`, and
+`nullptr` records nothing; `test_driver` takes an `envelope_log&` in
+`step(log)`, and records nothing in `step()`.
 
 The example plays a rally between two players. A serve from the host tells a
 player whom to serve to, and each player returns the ball until the rally
@@ -93,7 +95,7 @@ It prints:
 include::{examples}/xactor_drivers.expected[lines=7..9]
 ----
 
-`run_turn(2)` returned after two messages with work still waiting, and
+`run_turn(2, log)` returned after two messages with work still waiting, and
 `run_until_idle` delivered the other three. However the run was cut, the
 deliveries were the same, and so are the logs.
 
