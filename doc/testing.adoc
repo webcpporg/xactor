@@ -144,16 +144,16 @@ alone:
 | Target | How it is built and run
 
 | native
-| Any toolset not listed below. Each test is built and run twice: as the
-  build makes it, with exceptions and RTTI, and as `<name>-noexcept`, without
-  exceptions and without RTTI, with `BOOST_NO_EXCEPTIONS` and webcpp's
-  `tools/throw_exception.cpp`. So every test proves xactor in both of the
-  builds a program may make of it.
+| Any toolset not listed below, with exceptions, as the build makes it.
+  Whether a program built natively uses exceptions is its user's choice: one
+  built with `exception-handling=off` links webcpp's
+  `tools/throw_exception.cpp`, as on wasip2.
 
 | wasip2
 | The toolset `clang-wasip2`, the Clang of wasi-sdk for wasm32-wasip2, run by
   wasmtime. Without exceptions, which some WebAssembly hosts lack: with
-  `BOOST_NO_EXCEPTIONS` and `tools/throw_exception.cpp`.
+  `BOOST_NO_EXCEPTIONS` and `tools/throw_exception.cpp`. This is the build
+  that proves xactor works without exceptions.
 
 | wasip3
 | The toolset `clang-wasip3`, for wasm32-wasip3, run by wasmtime. With
@@ -195,8 +195,8 @@ using clang : wasip3 : $(wasi-sdk)/bin/clang++
 ----
 
 b2 compares timestamps, so a result that counts is built from scratch, with
-`b2 -a`. `b2 libs/xactor/test//scheduler`, or `scheduler-noexcept`, builds
-and runs one test alone, while working on it.
+`b2 -a`. `b2 libs/xactor/test//scheduler` builds and runs one test alone,
+while working on it.
 
 [#xactor-testing-report]
 === The test matrix
