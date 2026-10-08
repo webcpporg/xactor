@@ -72,12 +72,12 @@ the same deliveries produce identical envelope logs.
 . [[xactor-invariant-18]]xactor reads no clock, no disk and no network.
 . [[xactor-invariant-19]]No turn blocks: nothing calls `io_context::run`,
 `run_one` or `run_for`.
-. [[xactor-invariant-20]]xactor throws no exception of its own and needs
-no RTTI: every operation that can fail returns a `result`, and the library
-compiles and runs with exceptions and RTTI turned off. Where exceptions are
-on, an operation that allocates, such as `spawn`, `deliver`, `send`,
-`wake_at` or the log's `record`, can still throw `std::bad_alloc`, as a
-standard container does.
+. [[xactor-invariant-20]]xactor throws no exception of its own: every
+operation that can fail returns a `result`, and the library compiles and runs
+without exceptions, as its wasip2 build does. Where exceptions are on, an
+operation that allocates, such as `spawn`, `deliver`, `send`, `wake_at` or
+the log's `record`, can still throw `std::bad_alloc`, as a standard container
+does.
 . [[xactor-invariant-21]]There is no static mutable state: two schedulers
 in one process are independent.
 . [[xactor-invariant-22]]`test_driver` exposes `step`, exactly one

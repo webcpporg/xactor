@@ -16,8 +16,9 @@ holds only what is specific to xactor.
   run. A change that makes a run depend on anything else is a bug.
 - **Errors are values.** Every operation that can fail returns `result<T>`, a
   `boost::system::result` whose errors are of the category `webcpp.xactor`,
-  and xactor throws nothing of its own, so it builds with exceptions and RTTI
-  off: on wasip2, and in every test's `-noexcept` variant.
+  and xactor throws nothing of its own, so it builds and passes its tests
+  without exceptions on wasip2. Everywhere else, whether a program uses
+  exceptions is its user's choice.
 - **Fixed numbers.** The values of `errc` and `status` are fixed and never
   reused.
 - **Boost.Asio is native only.** `drivers.hpp` includes it for `asio_driver`

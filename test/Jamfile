@@ -12,9 +12,8 @@ webcpp.targets native wasip2 wasip3 ;
 
 webcpp.headers-alone xactor : ../include ;
 
-# xactor's guarantees, one program per file, each also built natively as
-# <name>-noexcept, without exceptions and without RTTI. scheduler checks the
-# Asio driver where drivers.hpp declares it, outside WASI.
+# xactor's guarantees, one program per file. scheduler checks the Asio
+# driver where drivers.hpp declares it, outside WASI.
 webcpp.run scheduler : scheduler_test.cpp ;
 webcpp.run lifecycle : lifecycle_test.cpp ;
 webcpp.run fuel : fuel_test.cpp ;

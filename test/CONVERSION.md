@@ -16,13 +16,19 @@ assertion by assertion.
 | `test/xactor/fuel_test.cpp` | `xactor-fuel` | `test/fuel_test.cpp` | `fuel` |
 | `test/xactor/create_actor_test.cpp` | `xactor-create-actor` | `test/create_actor_test.cpp` | `create_actor` |
 
-Both builds had, and have, a second variant of each program, `<target>-noexcept`, without
-exceptions and without RTTI:
+Both builds had a second variant of each program, `<target>-noexcept`, without exceptions and
+without RTTI, when the conversion was made:
 - the old `suite` rule built it with `<exception-handling>off <rtti>off` and
   `STATELY_TEST_NO_EXCEPTIONS`, and compiled Boost.Test's own `runner.cpp` with exceptions on;
-- `webcpp.run` builds it natively with `<exception-handling>off <rtti>off` and
-  `BOOST_NO_EXCEPTIONS`, and links `tools/throw_exception.cpp`. lightweight_test is a header,
-  and compiles in each variant.
+- `webcpp.run` built it natively with `<exception-handling>off <rtti>off` and
+  `BOOST_NO_EXCEPTIONS`, and linked `tools/throw_exception.cpp`. lightweight_test is a header,
+  and compiled in each variant.
+
+That variant no longer exists: webcpp builds no variant without exceptions and none without
+RTTI (owner decision, 2026-10-08). "Without exceptions" is now checked on wasip2 only, where
+every program is built with `BOOST_NO_EXCEPTIONS` and links `tools/throw_exception.cpp`. The
+records below that name a `-noexcept` variant are of the conversion, and stay as they were
+made.
 
 `test/runner.cpp` did not move, since there is no framework left to compile.
 
