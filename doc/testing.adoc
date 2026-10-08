@@ -144,9 +144,8 @@ alone:
 | Target | How it is built and run
 
 | native
-| Any toolset not listed below, with exceptions, as the build makes it.
-  Whether a program built natively uses exceptions is its user's choice: one
-  built with `exception-handling=off` links webcpp's
+| Any toolset not listed below. As the build makes it: with exceptions,
+  unless its user asks for `exception-handling=off`, which links webcpp's
   `tools/throw_exception.cpp`, as on wasip2.
 
 | wasip2
