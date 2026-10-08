@@ -29,7 +29,8 @@ The behaviour of an actor is {cpp} code. It can be dynamic, a class whose
 `handle` decides at run time what each message does, or static, a state
 machine compiled into the program, here with Boost.MSM
 (<<xactor-static-actors>>). A library can build on xactor too: webcpp's
-xstate, to come, builds its actor layer on it.
+link:{webcpp-libs}/xstate/{webcpp-page}#introduction[xstate] builds its actor
+layer on it.
 
 [#xactor-requirements]
 === Requirements
