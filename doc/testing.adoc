@@ -146,18 +146,20 @@ alone:
 | native
 | Any toolset not listed below. As the build makes it: with exceptions,
   unless its user asks for `exception-handling=off`, which links webcpp's
-  `tools/throw_exception.cpp`, as on wasip2.
+  `tools/throw_exception.cpp`.
 
 | wasip2
 | The toolset `clang-wasip2`, the Clang of wasi-sdk for wasm32-wasip2, run by
-  wasmtime. Without exceptions, which some WebAssembly hosts lack: with
-  `BOOST_NO_EXCEPTIONS` and `tools/throw_exception.cpp`. This is the build
-  that proves xactor works without exceptions.
+  wasmtime. With exceptions, as WebAssembly's exception handling, as on
+  wasip3.
 
 | wasip3
 | The toolset `clang-wasip3`, for wasm32-wasip3, run by wasmtime. With
   exceptions, as WebAssembly's exception handling.
 |===
+
+That xactor works without exceptions is checked by the lint, which compiles
+every public header with `exception-handling=off`.
 
 Boost.Asio does not compile for either WASI target, so the Asio driver, its
 checks in `scheduler` and the example `xactor_asio` are built natively only
