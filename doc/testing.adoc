@@ -159,7 +159,9 @@ alone:
 |===
 
 That xactor works without exceptions is checked by the lint, which compiles
-every public header with `exception-handling=off`.
+every public header, and every test and example, which instantiate its
+templates, with `exception-handling=off`; a template that none of them
+instantiates is not checked.
 
 Boost.Asio does not compile for either WASI target, so the Asio driver, its
 checks in `scheduler` and the example `xactor_asio` are built natively only
