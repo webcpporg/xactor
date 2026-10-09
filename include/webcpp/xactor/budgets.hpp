@@ -12,6 +12,8 @@
 #ifndef WEBCPP_XACTOR_BUDGETS_HPP
 #define WEBCPP_XACTOR_BUDGETS_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <cstdint>
 
 namespace webcpp::xactor {

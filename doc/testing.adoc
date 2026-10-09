@@ -163,6 +163,17 @@ every public header, and every test and example, which instantiate its
 templates, with `exception-handling=off`; a template that none of them
 instantiates is not checked.
 
+`<webcpp/xactor/config.hpp>`, which every public header of xactor includes
+first, defines `WEBCPP_XACTOR_NO_EXCEPTIONS` when the build has no
+exceptions, and a program may define it itself to turn xactor's exceptions
+off in a build that has them, as Boost.Asio's `BOOST_ASIO_NO_EXCEPTIONS`
+does. xactor raises no exception of its own, so the macro changes nothing in
+it: it exists so that a program can set it for every webcpp library alike.
+The tests `config` and `config_developer_defined` check both ways it is
+defined, and the lint refuses a `throw` in a public header, even in a
+template nothing instantiates: an exception goes through
+`boost::throw_exception`.
+
 Boost.Asio does not compile for either WASI target, so the Asio driver, its
 checks in `scheduler` and the example `xactor_asio` are built natively only
 (<<xactor-drivers-asio>>). Every other program of `test/` and `example/`

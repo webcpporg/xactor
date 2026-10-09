@@ -12,6 +12,8 @@
 #ifndef WEBCPP_XACTOR_STATUS_HPP
 #define WEBCPP_XACTOR_STATUS_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <cstdint>
 
 namespace webcpp::xactor {

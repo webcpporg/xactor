@@ -13,6 +13,8 @@
 #ifndef WEBCPP_XACTOR_ENVELOPE_HPP
 #define WEBCPP_XACTOR_ENVELOPE_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <webcpp/xactor/ids.hpp>
 
 namespace webcpp::xactor {

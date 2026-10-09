@@ -16,6 +16,8 @@
 #ifndef WEBCPP_XACTOR_IDS_HPP
 #define WEBCPP_XACTOR_IDS_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <compare>
 #include <cstdint>
 
