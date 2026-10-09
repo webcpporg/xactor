@@ -135,5 +135,6 @@ does. Neither xactor nor a program needs b2's target for the library,
 `/boost/msm//boost_msm`, and neither uses it: it brings every library MSM
 depends on, Boost.Serialization among them, which is compiled.
 
-The machine needs no exceptions: the program is built and run natively, and
-for wasm32-wasip2, a build without them, and wasm32-wasip3.
+The program is built and run natively, for wasm32-wasip2 and for
+wasm32-wasip3, with exceptions, and the machine needs none: a user's build
+without them, `exception-handling=off`, runs it as well.
