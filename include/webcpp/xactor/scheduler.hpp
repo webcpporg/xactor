@@ -14,6 +14,8 @@
 #ifndef WEBCPP_XACTOR_SCHEDULER_HPP
 #define WEBCPP_XACTOR_SCHEDULER_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <webcpp/xactor/actor_logic.hpp>
 #include <webcpp/xactor/budgets.hpp>
 #include <webcpp/xactor/envelope.hpp>

@@ -13,6 +13,8 @@
 #ifndef WEBCPP_XACTOR_ERRORS_HPP
 #define WEBCPP_XACTOR_ERRORS_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <boost/system/error_category.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/system/result.hpp>

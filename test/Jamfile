@@ -12,6 +12,13 @@ webcpp.targets native wasip2 wasip3 ;
 
 webcpp.headers-alone xactor : ../include ;
 
+# config.hpp defines WEBCPP_XACTOR_NO_EXCEPTIONS exactly when the build has
+# no exceptions, and keeps it when a developer defines it in a build that
+# has them.
+webcpp.compile config : config_test.cpp ;
+webcpp.compile config_developer_defined : config_test.cpp
+  : <define>WEBCPP_XACTOR_NO_EXCEPTIONS <define>WEBCPP_TEST_XACTOR_DEVELOPER_DEFINED ;
+
 # xactor's guarantees, one program per file. scheduler checks the Asio
 # driver where drivers.hpp declares it, outside WASI.
 webcpp.run scheduler : scheduler_test.cpp ;

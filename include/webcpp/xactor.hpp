@@ -12,6 +12,8 @@
 #ifndef WEBCPP_XACTOR_HPP
 #define WEBCPP_XACTOR_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <webcpp/xactor/actor_logic.hpp>
 #include <webcpp/xactor/budgets.hpp>
 #include <webcpp/xactor/drivers.hpp>

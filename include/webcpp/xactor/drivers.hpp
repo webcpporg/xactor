@@ -16,6 +16,8 @@
 #ifndef WEBCPP_XACTOR_DRIVERS_HPP
 #define WEBCPP_XACTOR_DRIVERS_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <webcpp/xactor/envelope_log.hpp>
 #include <webcpp/xactor/errors.hpp>
 #include <webcpp/xactor/scheduler.hpp>

@@ -12,6 +12,8 @@
 #ifndef WEBCPP_XACTOR_ACTOR_LOGIC_HPP
 #define WEBCPP_XACTOR_ACTOR_LOGIC_HPP
 
+#include <webcpp/xactor/config.hpp>
+
 #include <webcpp/xactor/envelope.hpp>
 #include <webcpp/xactor/errors.hpp>
 

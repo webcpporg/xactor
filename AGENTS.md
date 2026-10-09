@@ -20,6 +20,10 @@ holds only what is specific to xactor.
   exceptions, which the lint checks by compiling every public header, and
   every test and example, without them. Whether a program uses exceptions is
   its user's choice, on every target.
+- **`config.hpp` comes first.** Every public header includes
+  `<webcpp/xactor/config.hpp>` first, which defines
+  `WEBCPP_XACTOR_NO_EXCEPTIONS` without exceptions or when a developer does; a
+  header raises only through `boost::throw_exception` (the lint's bare throw).
 - **Fixed numbers.** The values of `errc` and `status` are fixed and never
   reused.
 - **Boost.Asio is native only.** `drivers.hpp` includes it for `asio_driver`
