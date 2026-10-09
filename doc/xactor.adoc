@@ -63,3 +63,5 @@ other sections teach the library; this one is where a name is looked up.
 include::{reference}[leveloffset=+1]
 
 include::glossary.adoc[]
+
+include::changelog.adoc[]
