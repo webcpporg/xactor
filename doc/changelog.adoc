@@ -16,12 +16,11 @@ of every version are on webcpp's index page.
 === Unreleased
 
 // tag::unreleased[]
-* *Breaking change:* removed the native build without exceptions; RTTI is
-never restricted in any build.
-* Changed wasip2 to build with exceptions, the last target still built
-without them.
+* *Breaking change:* removed the guarantee that xactor runs without RTTI;
+build it with RTTI.
+* Changed the guarantee without exceptions to compiling only, which the lint
+checks.
 * Added the `WEBCPP_XACTOR_NO_EXCEPTIONS` configuration macro, defined
 automatically or by the developer.
-* Updated the page to link xstate, now that it builds on xactor.
-* Added a changelog, the page's last appendix, with each version's changes.
+* Updated the documentation: a link to xstate, and a changelog appendix.
 // end::unreleased[]
