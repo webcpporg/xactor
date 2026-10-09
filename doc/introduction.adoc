@@ -44,8 +44,8 @@ layer on it.
 * *Without exceptions, a definition of `boost::throw_exception`.* xactor
   throws no exception of its own: it is built and tested with exceptions on,
   on every target, and its headers compile without them. Whether a program
-  uses them is its own choice. Without them, Boost.System's `result` still names
-  `boost::throw_exception`, and the program defines it
+  uses them is its own choice. Without them, Boost.System's `result` still
+  names `boost::throw_exception`, and the program defines it
   (<<xactor-quick-start>>). A program built with exceptions needs nothing
   here, since Boost defines the function then.
 * *Nothing else:* no threads, no clock, and no global or static mutable

@@ -74,8 +74,8 @@ the same deliveries produce identical envelope logs.
 `run_one` or `run_for`.
 . [[xactor-invariant-20]]xactor throws no exception of its own: every
 operation that can fail returns a `result`, and the library compiles without
-exceptions, which the lint checks for every public header. Where exceptions
-are on, an
+exceptions, which the lint checks for every public header and for every test
+and example, which instantiate its templates. Where exceptions are on, an
 operation that allocates, such as `spawn`, `deliver`, `send`, `wake_at` or
 the log's `record`, can still throw `std::bad_alloc`, as a standard container
 does.

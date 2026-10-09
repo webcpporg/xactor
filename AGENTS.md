@@ -17,8 +17,9 @@ holds only what is specific to xactor.
 - **Errors are values.** Every operation that can fail returns `result<T>`, a
   `boost::system::result` whose errors are of the category `webcpp.xactor`,
   and xactor throws nothing of its own, so its headers compile without
-  exceptions, which the lint checks. Whether a program uses exceptions is its
-  user's choice, on every target.
+  exceptions, which the lint checks by compiling every public header, and
+  every test and example, without them. Whether a program uses exceptions is
+  its user's choice, on every target.
 - **Fixed numbers.** The values of `errc` and `status` are fixed and never
   reused.
 - **Boost.Asio is native only.** `drivers.hpp` includes it for `asio_driver`

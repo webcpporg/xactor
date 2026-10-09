@@ -26,8 +26,9 @@ without RTTI, when the conversion was made:
 
 That variant no longer exists: webcpp builds no variant without exceptions and none without
 RTTI (owner decision, 2026-10-08). "Without exceptions" is now checked by the lint, which
-compiles every public header with `exception-handling=off`. The records below that name a
-`-noexcept` variant are of the conversion, and stay as they were made.
+compiles every public header, and every test and example, with `exception-handling=off`. The
+records below that name a `-noexcept` variant are of the conversion, and stay as they were
+made.
 
 `test/runner.cpp` did not move, since there is no framework left to compile.
 
