@@ -119,7 +119,7 @@ xactor's tests are lightweight_test programs, one per subject, under
 
 Each test case is a function, and `main` calls them all and returns
 `boost::report_errors()`. A case that cannot go on after a failed check
-returns, `if (!BOOST_TEST(...)) { return; }`; a helper, which cannot return
+returns, `+if (!BOOST_TEST(...)) { return; }+`; a helper, which cannot return
 from its case, calls `webcpp::test::require`, of `test/require.hpp`, which
 ends the program with the errors counted so far. Each case is named after
 the rule it checks, as `a_host_delivery_costs_no_fuel`, and the comment above
