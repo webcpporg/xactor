@@ -24,8 +24,10 @@ without RTTI, when the conversion was made:
   `BOOST_NO_EXCEPTIONS`, and linked `tools/throw_exception.cpp`. lightweight_test is a header,
   and compiled in each variant.
 
-That variant no longer exists: webcpp builds no variant without exceptions and none without
-RTTI (owner decision, 2026-10-08). "Without exceptions" is now checked by the lint, which
+That whole-suite variant no longer exists, and none without RTTI (owner decision, 2026-10-08;
+since 2026-10-10 every library supports a build without exceptions, and a library tests what
+behaves otherwise without them in tests of its own that declare `<exception-handling>off`).
+"Without exceptions" is now checked by the lint, which
 compiles every public header, and every test and example, with `exception-handling=off`. The
 records below that name a `-noexcept` variant are of the conversion, and stay as they were
 made.
