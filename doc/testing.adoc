@@ -164,12 +164,14 @@ templates, with `exception-handling=off`; a template that none of them
 instantiates is not checked.
 
 `<webcpp/xactor/config.hpp>`, which every public header of xactor includes
-first, defines `WEBCPP_XACTOR_NO_EXCEPTIONS` when the build has no
-exceptions, and a program may define it itself to turn xactor's exceptions
-off in a build that has them, as Boost.Asio's `BOOST_ASIO_NO_EXCEPTIONS`
-does. xactor raises no exception of its own, so the macro changes nothing in
-it: it exists so that a program can set it for every webcpp library alike.
-The tests `config` and `config_developer_defined` check both ways it is
+first, defines `WEBCPP_XACTOR_NO_EXCEPTIONS` when webcpp has no exceptions
+(`WEBCPP_HAS_EXCEPTIONS` is not defined: the compiler has none, or the
+program defined `WEBCPP_NO_EXCEPTIONS`), and a program may define it for
+xactor alone, to turn xactor's exceptions off in a build that has them, as
+Boost.Asio's `BOOST_ASIO_NO_EXCEPTIONS` does. xactor raises no exception of
+its own, so the macro changes nothing in it: it exists so that a program can
+set it for every webcpp library alike. The tests `config`,
+`config_developer_defined` and `config_all_off` check the three ways it is
 defined, and the lint refuses a `throw` in a public header, even in a
 template nothing instantiates: an exception goes through
 `boost::throw_exception`.

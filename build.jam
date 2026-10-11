@@ -5,8 +5,9 @@
 # https://www.boost.org/LICENSE_1_0.txt)
 #
 # xactor, a header-only, deterministic actor system. A program uses it
-# through /webcpp/xactor//xactor, which adds its headers and Boost's.
+# through /webcpp/xactor//xactor, which adds its headers, Boost's and
+# webcpp's configuration.
 
 project /webcpp/xactor ;
 
-alias xactor : : : : <include>include <library>/boost//headers ;
+alias xactor : : : : <include>include <library>/boost//headers <library>/webcpp/config//config ;

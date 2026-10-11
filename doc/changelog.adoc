@@ -23,4 +23,8 @@ checks.
 * Added the `WEBCPP_XACTOR_NO_EXCEPTIONS` configuration macro, defined
 automatically or by the developer.
 * Updated the documentation: a link to xstate, and a changelog appendix.
+* Changed `config.hpp` to include `<webcpp/config.hpp>`, webcpp's
+configuration, which the build adds.
+* Added `WEBCPP_NO_EXCEPTIONS`, which disables xactor's exceptions with
+every webcpp library's.
 // end::unreleased[]

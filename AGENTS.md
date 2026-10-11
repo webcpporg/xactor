@@ -21,9 +21,13 @@ holds only what is specific to xactor.
   every test and example, without them. Whether a program uses exceptions is
   its user's choice, on every target.
 - **`config.hpp` comes first.** Every public header includes
-  `<webcpp/xactor/config.hpp>` first, which defines
-  `WEBCPP_XACTOR_NO_EXCEPTIONS` without exceptions or when a developer does; a
-  header raises only through `boost::throw_exception` (the lint's bare throw).
+  `<webcpp/xactor/config.hpp>` first, which includes `<webcpp/config.hpp>`
+  first and defines `WEBCPP_XACTOR_NO_EXCEPTIONS` when webcpp has no exceptions
+  (`WEBCPP_HAS_EXCEPTIONS` is not defined: the compiler has none, or the
+  program defined `WEBCPP_NO_EXCEPTIONS`) or when a program defines it for
+  xactor alone; the tests `config`, `config_developer_defined` and
+  `config_all_off` check the three ways. A header raises only through
+  `boost::throw_exception` (the lint's bare throw).
 - **Fixed numbers.** The values of `errc` and `status` are fixed and never
   reused.
 - **Boost.Asio is native only.** `drivers.hpp` includes it for `asio_driver`

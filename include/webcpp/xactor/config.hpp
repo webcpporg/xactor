@@ -13,15 +13,16 @@
 #ifndef WEBCPP_XACTOR_CONFIG_HPP
 #define WEBCPP_XACTOR_CONFIG_HPP
 
-#include <boost/config.hpp>
+#include <webcpp/config.hpp>
 
 // MrDocs parses xactor as a build with exceptions does, where the macro is not
 // defined: this definition, undone at once, is the one the reference lists, and
 // the parse goes on with every API that throws in it.
 #ifdef __MRDOCS__
 /**
- Defined when xactor is built without exceptions: automatically when the
- compiler has none (`BOOST_NO_EXCEPTIONS`), or by the developer to disable them
+ Defined when xactor is built without exceptions: when webcpp has none (the
+ compiler has none, or the developer defined `WEBCPP_NO_EXCEPTIONS` for every
+ webcpp library), or when the developer defines it alone, to disable xactor's
  in a build that has them.
 
  xactor raises no exception of its own: every operation that can fail returns a
@@ -36,7 +37,7 @@
 #undef WEBCPP_XACTOR_NO_EXCEPTIONS
 #endif
 
-#if defined(BOOST_NO_EXCEPTIONS) && !defined(WEBCPP_XACTOR_NO_EXCEPTIONS)
+#if !defined(WEBCPP_HAS_EXCEPTIONS) && !defined(WEBCPP_XACTOR_NO_EXCEPTIONS)
 #define WEBCPP_XACTOR_NO_EXCEPTIONS
 #endif
 

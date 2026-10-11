@@ -73,13 +73,14 @@ of its own (<<xactor-invariant-20,guarantee 20>>).
 [#xactor-quick-start-build]
 === Building it
 
-xactor needs Boost's headers and nothing compiled. From the root of a webcpp
-checkout, with the program copied as `quick_start.cpp`, this command builds
-it:
+xactor needs Boost's headers and webcpp's configuration, `libs/config`,
+and nothing compiled. From the root of a webcpp checkout, with the program
+copied as `quick_start.cpp`, this command builds it:
 
 [source,bash]
 ----
-clang++ -std=c++20 -I libs/xactor/include quick_start.cpp -o quick_start
+clang++ -std=c++20 -I libs/xactor/include -I libs/config/include quick_start.cpp \
+    -o quick_start
 ----
 
 A compiler that does not find Boost on its default include path is given
@@ -93,7 +94,7 @@ condition.
 [source,bash]
 ----
 clang++ -std=c++20 -fno-exceptions -DBOOST_NO_EXCEPTIONS -I libs/xactor/include \
-    quick_start.cpp tools/throw_exception.cpp -o quick_start
+    -I libs/config/include quick_start.cpp tools/throw_exception.cpp -o quick_start
 ----
 
 In the checkout, `b2 libs/xactor/example` builds and runs this program with

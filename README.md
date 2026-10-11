@@ -12,9 +12,10 @@ caused by one delivery from the host is paid from that delivery's fuel, and
 time moves only when the host brings it.
 
 One header, `<webcpp/xactor.hpp>`, includes the whole library, whose names
-are in the namespace `webcpp::xactor`. It needs Boost's headers and nothing
-to build or link. It runs natively, on wasm32-wasip2 and on wasm32-wasip3; a
-WASI build leaves out `asio_driver`, the one part that needs Boost.Asio.
+are in the namespace `webcpp::xactor`. It needs Boost's headers and webcpp's
+configuration, config, and nothing to build or link. It runs natively, on
+wasm32-wasip2 and on wasm32-wasip3; a WASI build leaves out `asio_driver`,
+the one part that needs Boost.Asio.
 
 ## Building and testing
 
