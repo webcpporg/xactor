@@ -233,4 +233,4 @@ time, at link time or when it ran. The output b2 captured of a failure is one
 click away. A lane in which nothing was built, or that was built for another
 target than its name says, fails by name rather than show green. The matrix
 is published with the documentation, at
-https://webcpporg.github.io/webcpp/report/.
+https://webcpporg.github.io/report/.

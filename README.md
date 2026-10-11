@@ -35,7 +35,7 @@ uses xactor through `/webcpp/xactor//xactor`.
 ## Documentation
 
 xactor's page, with its API reference, is published at
-<https://webcpporg.github.io/webcpp/libs/xactor/>; `b2 libs/xactor/doc`
+<https://webcpporg.github.io/libs/xactor/>; `b2 libs/xactor/doc`
 builds it into `doc/html/index.html`.
 
 ## License
