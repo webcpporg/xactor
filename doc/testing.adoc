@@ -115,6 +115,22 @@ xactor's tests are lightweight_test programs, one per subject, under
 | `create_actor`
 | `create_actor`, which constructs a new active actor that receives
   messages.
+
+| `errors`
+| The category `webcpp.xactor`: its name, the text of each `errc` and of a
+  value no `errc` defines, the form of `message` that writes into a caller's
+  buffer and cuts the text to fit it, and the `error_code` an `errc` makes.
+
+| `sequence_and_log`
+| `sequence_number::next`, and the comparison of two envelope logs, equal and
+  differing in each member of an entry, in length and in order.
+
+| `config`, `config_developer_defined`, `config_all_off`
+| Compile tests, which build `config_test.cpp` and run nothing: whether
+  `<webcpp/xactor/config.hpp>` defines `WEBCPP_XACTOR_NO_EXCEPTIONS` exactly
+  when webcpp has no exceptions, keeps the definition of a developer who
+  defined it for xactor alone, and defines it when the developer defined
+  `WEBCPP_NO_EXCEPTIONS` for every webcpp library.
 |===
 
 Each test case is a function, and `main` calls them all and returns

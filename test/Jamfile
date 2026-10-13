@@ -29,3 +29,5 @@ webcpp.run scheduler : scheduler_test.cpp ;
 webcpp.run lifecycle : lifecycle_test.cpp ;
 webcpp.run fuel : fuel_test.cpp ;
 webcpp.run create_actor : create_actor_test.cpp ;
+webcpp.run errors : errors_test.cpp ;
+webcpp.run sequence_and_log : sequence_and_log_test.cpp ;
