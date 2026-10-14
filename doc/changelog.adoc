@@ -16,6 +16,12 @@ of every version are on webcpp's index page.
 === Unreleased
 
 // tag::unreleased[]
+// end::unreleased[]
+
+[#xactor-changelog-0-1-0]
+=== webcpp 0.1.0
+
+// tag::0.1.0[]
 * *Breaking change:* removed the guarantee that xactor runs without RTTI;
 build it with RTTI.
 * Changed the guarantee without exceptions to compiling only, which the lint
@@ -27,4 +33,4 @@ automatically or by the developer.
 configuration, which the build adds.
 * Added `WEBCPP_NO_EXCEPTIONS`, which disables xactor's exceptions with
 every webcpp library's.
-// end::unreleased[]
+// end::0.1.0[]
